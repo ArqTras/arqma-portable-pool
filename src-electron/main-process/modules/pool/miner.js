@@ -147,7 +147,8 @@ export class Miner {
             job_id = uid()
             blob = block.newBlob()
             target = this.targetToCompact(difficulty)
-
+            seed_hash = block.seed_hash
+            next_seed_hash = block.next_seed_hash
             this.addJob({
                 id: job_id,
                 extra_nonce: block.extra_nonce,
