@@ -130,38 +130,36 @@ export class Miner {
     }
 
     getJob(force=false) {
-    const block = this.pool.blocks.current
-    let job_id = "", blob = "", target = "", seed_hash = "", next_seed_hash = ""
-    if(block.height != this.lastHeight || this.difficulty.pending || force) {
-        this.lastHeight = block.height
-        if(this.difficulty.pending) {
-            this.difficulty = {
-            now: this.difficulty.pending,
-            pending: null,
-            last: this.difficulty.now
+        const block = this.pool.blocks.current
+        let job_id = "", blob = "", target = ""
+        if(block.height != this.lastHeight || this.difficulty.pending || force) {
+            this.lastHeight = block.height
+            if(this.difficulty.pending) {
+                this.difficulty = {
+                    now: this.difficulty.pending,
+                    pending: null,
+                    last: this.difficulty.now
+                }
+            }
+
+            let difficulty = Math.min(this.difficulty.now, block.difficulty-1)
+
+            job_id = uid()
+            blob = block.newBlob()
+            target = this.targetToCompact(difficulty)
+
+            this.addJob({
+                id: job_id,
+                extra_nonce: block.extra_nonce,
+                height: block.height,
+                difficulty: difficulty,
+                submissions: []
+            })
+            while(this.jobs.length > 4) {
+                this.jobs.shift()
+            }
         }
-    }
-
-
-    let difficulty = Math.min(this.difficulty.now, block.difficulty-1)
-
-    job_id = uid()
-    blob = block.newBlob()
-    target = this.targetToCompact(difficulty)
-
-    this.addJob({
-        id: job_id,
-        extra_nonce: block.extra_nonce,
-        height: block.height,
-        difficulty: difficulty,
-        submissions: [],
-        seed_hash: block.seed_hash,
-        next_seed_hash: block.next_seed_hash
-    })
-    while(this.jobs.length > 4) {
-    this.jobs.shift()
-    }
-    return {blob, job_id, target, seed_hash, next_seed_hash}
+        return { blob, job_id, target }
     }
 
     targetToCompact(diff) {
