@@ -131,7 +131,7 @@ export class Miner {
 
     getJob(force=false) {
         const block = this.pool.blocks.current
-        let job_id = "", blob = "", target = ""
+        let job_id = "", blob = "", target = "", seed_hash = "", next_seed_hash = ""
         if(block.height != this.lastHeight || this.difficulty.pending || force) {
             this.lastHeight = block.height
             if(this.difficulty.pending) {
@@ -153,13 +153,15 @@ export class Miner {
                 extra_nonce: block.extra_nonce,
                 height: block.height,
                 difficulty: difficulty,
-                submissions: []
+                submissions: [],
+                seed_hash: block.seed_hash,
+                next_seed_hash: block.next_seed_hash
             })
             while(this.jobs.length > 4) {
                 this.jobs.shift()
             }
         }
-        return { blob, job_id, target }
+        return { blob, job_id, target, seed_hash, next_seed_hash }
     }
 
     targetToCompact(diff) {
