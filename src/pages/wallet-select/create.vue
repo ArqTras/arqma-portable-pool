@@ -1,57 +1,53 @@
 <template>
-<q-page>
-    <div class="q-mx-md">
-        <q-field class="q-mt-none">
+<q-page class="create-wallet">
+    <div class="fields q-mx-md q-mt-md">
+        <ArqmaField :label="$t('fieldLabels.walletName')" :error="$v.wallet.name.$error">
             <q-input
                 v-model="wallet.name"
-                float-label="Wallet name"
+                @keyup.enter="create"
                 @blur="$v.wallet.name.$touch"
-                :error="$v.wallet.name.$error"
                 :dark="theme=='dark'"
-                />
-        </q-field>
+                :placeholder="$t('placeholders.walletName')"
+                hide-underline
+            />
+        </ArqmaField>
 
-        <q-field>
+        <ArqmaField :label="$t('fieldLabels.seedLanguage')">
             <q-select
                 v-model="wallet.language"
-                float-label="Seed language"
                 :options="languageOptions"
                 :dark="theme=='dark'"
-                />
-        </q-field>
+                hide-underline
+            />
+        </ArqmaField>
 
-        <q-field>
-            <div class="row gutter-md">
-                <div><q-radio v-model="wallet.type" val="long" label="Long address" /></div>
-                <div><q-radio v-model="wallet.type" val="kurz" label="Short (kurz) address" /></div>
-            </div>
-        </q-field>
+        <ArqmaField :label="$t('fieldLabels.password')" optional>
+            <q-input
+                v-model="wallet.password"
+                @keyup.enter="create"
+                type="password"
+                :dark="theme=='dark'"
+                :placeholder="$t('placeholders.walletPassword')"
+                hide-underline
+            />
+        </ArqmaField>
 
-        <p v-if="wallet.type == 'long'">
-            Create both public/private view & spend keys.  Allows creation of view-only wallets.
-        </p>
-        <p v-if="wallet.type == 'kurz'">
-            Create shorter style address with only private view & spend keys. Does NOT support view-only wallets.
-        </p>
-
-        <q-field>
-            <q-input v-model="wallet.password" type="password" float-label="Password" :dark="theme=='dark'" />
-        </q-field>
-
-        <q-field>
-            <q-input v-model="wallet.password_confirm" type="password" float-label="Confirm Password" :dark="theme=='dark'" />
-        </q-field>
-
+        <ArqmaField :label="$t('fieldLabels.confirmPassword')">
+            <q-input
+                v-model="wallet.password_confirm"
+                @keyup.enter="create"
+                type="password"
+                :dark="theme=='dark'"
+                hide-underline
+            />
+        </ArqmaField>
         <PasswordStrength :password="wallet.password" ref="password_strength" />
 
         <q-field>
-            <q-btn color="primary" @click="create" label="Create wallet" />
+            <q-btn color="primary" @click="create" :label="$t('buttons.createWallet')" />
         </q-field>
 
     </div>
-
-    <WalletLoading ref="loading" />
-
 </q-page>
 </template>
 
@@ -59,14 +55,13 @@
 import PasswordStrength from "components/password_strength"
 import { required } from "vuelidate/lib/validators"
 import { mapState } from "vuex"
-import WalletLoading from "components/wallet_loading"
+import ArqmaField from "components/arqma_field"
 export default {
     data () {
         return {
             wallet: {
                 name: "",
                 language: "English",
-                type: "long",
                 password: "",
                 password_confirm: ""
             },
@@ -90,7 +85,6 @@ export default {
         }
     },
     computed: mapState({
-        notify_empty_password: state => state.gateway.app.config.preference.notify_empty_password,
         theme: state => state.gateway.app.config.appearance.theme,
         status: state => state.gateway.wallet.status,
     }),
@@ -102,11 +96,11 @@ export default {
                     case 1:
                         break;
                     case 0:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$router.replace({ path: "/wallet-select/created" });
                         break;
                     default:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$q.notify({
                             type: "negative",
                             timeout: 1000,
@@ -131,7 +125,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Enter a wallet name"
+                    message: this.$t("notification.errors.enterWalletName")
                 })
                 return
             }
@@ -139,72 +133,78 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Passwords do not match"
+                    message: this.$t("notification.errors.passwordNoMatch")
                 })
                 return
             }
-
             this.warnEmptyPassword()
-                .then(options => {
-                    if(options.length > 0 && options[0] === true) {
-                        // user selected do not show again
-                        this.$gateway.send("core", "quick_save_config", {
-                            preference: {
-                                notify_empty_password: false
+                            .then(options => {
+                                if(options.length > 0 && options[0] === true) {
+                                    // user selected do not show again
+                                    this.$gateway.send("core", "quick_save_config", {
+                                        preference: {
+                                            notify_empty_password: false
+                                        }
+                                    })
+                                }
+                                this.$q.loading.show({
+                                    delay: 0
+                                })
+                                this.$gateway.send("wallet", "create_wallet", this.wallet);
+                                    }).catch(() => {
+                                    })
+                            },
+                            cancel() {
+                                this.$router.replace({ path: "/wallet-select" });
+                            },
+                            warnEmptyPassword: function () {
+                                let message = ""
+                                if(this.wallet.password == "") {
+                                    message = this.$t("strings.usingEmptyPass")
+                                } else if(this.$refs.password_strength.score < 3) {
+                                    message = "Using an insecure password could allow attackers to brute-force your wallet! Consider using a password with better strength."
+                                }
+                                if(this.notify_empty_password && message != "") {
+                                    return this.$q.dialog({
+                                        title: "Warning",
+                                        message: message,
+                                        options: {
+                                            type: "checkbox",
+                                            model: [],
+                                            items: [
+                                                {label: "Do not show this message again", value: true},
+                                            ]
+                                        },
+                                        ok: {
+                                            label: "CONTINUE"
+                                        },
+                                        cancel: {
+                                            flat: true,
+                                            label: "CANCEL",
+                                            color: this.theme=="dark"?"white":"dark"
+                                        }
+                                    })
+                                } else {
+                                    return new Promise((resolve, reject) => {
+                                        resolve([])
+                                    })
+                                }
                             }
-                        })
-                    }
+                        },
 
-                    this.$refs.loading.show()
-
-                    this.$gateway.send("wallet", "create_wallet", this.wallet);
-
-                }).catch(() => {
-                })
-        },
-        cancel() {
-            this.$router.replace({ path: "/wallet-select" });
-        },
-        warnEmptyPassword: function () {
-            let message = ""
-            if(this.wallet.password == "") {
-                message = "Using an empty password will leave your wallet unencrypted on your file system!"
-            } else if(this.$refs.password_strength.score < 3) {
-                message = "Using an insecure password could allow attackers to brute-force your wallet! Consider using a password with better strength."
-            }
-            if(this.notify_empty_password && message != "") {
-                return this.$q.dialog({
-                    title: "Warning",
-                    message: message,
-                    options: {
-                        type: "checkbox",
-                        model: [],
-                        items: [
-                            {label: "Do not show this message again", value: true},
-                        ]
-                    },
-                    ok: {
-                        label: "CONTINUE"
-                    },
-                    cancel: {
-                        flat: true,
-                        label: "CANCEL",
-                        color: this.theme=="dark"?"white":"dark"
-                    }
-                })
-            } else {
-                return new Promise((resolve, reject) => {
-                    resolve([])
-                })
-            }
-        }
-    },
     components: {
-        PasswordStrength,
-        WalletLoading
+        ArqmaField,
+        PasswordStrength
     }
 }
 </script>
 
-<style>
+<style lang="scss">
+.create-wallet {
+    .fields {
+        > * {
+            margin-bottom: 16px;
+        }
+    }
+}
 </style>

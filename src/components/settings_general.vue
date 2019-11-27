@@ -183,5 +183,21 @@ export default {
     .q-collapsible-sub-item {
         padding: 0;
     }
+
+    .row.pl-sm {
+        > * + * {
+            padding-left: 16px;
+        }
+    }
+
+    .col.pt-sm {
+        > * + * {
+            padding-top: 16px;
+        }
+    }
+
+    .remote-dropdown {
+        padding: 0 !important;
+    }
 }
 </style>

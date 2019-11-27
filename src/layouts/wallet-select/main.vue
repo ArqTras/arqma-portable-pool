@@ -11,9 +11,9 @@
                    @click="cancel()" />
         </template>
 
-        <q-toolbar-title v-if="page_title=='Ryo'">
+        <q-toolbar-title v-if="page_title=='Arqma'">
             <div style="margin-top:7px">
-                <img src="statics/ryo-wallet.svg" height="32">
+                <img src="statics/arqma.svg" height="32">
             </div>
         </q-toolbar-title>
         <q-toolbar-title v-else>
@@ -51,6 +51,8 @@ export default {
             switch(this.$route.name) {
                 case "wallet-create":
                     return "Create new wallet"
+                case "wallet-mcreate":
+                    return "Multisig create new wallet"
                 case "wallet-restore":
                     return "Restore wallet from seed"
                 case "wallet-import":
@@ -64,7 +66,7 @@ export default {
 
                 default:
                 case "wallet-select":
-                    return "Ryo"
+                    return "Arqma"
             }
         }
     },
@@ -76,6 +78,7 @@ export default {
                 // short delay to prevent wallet data reaching the
                 // websocket moments after we close and reset data
                 this.$store.dispatch("gateway/resetWalletData")
+                this.$store.dispatch("gateway/resetMarketData")
             }, 250);
         }
     },

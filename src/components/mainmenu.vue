@@ -1,17 +1,16 @@
 <template>
 <div>
-    <q-btn class="menu" label="" size="md" flat>
-        <q-icon name="menu" />
+    <q-btn class="menu" icon="menu" size="md" flat>
         <q-popover>
             <q-list separator link>
                 <q-item v-close-overlay @click.native="switchWallet" v-if="!disableSwitchWallet">
                     <q-item-main>
-                        <q-item-tile label>Switch Wallet</q-item-tile>
+                        <q-item-tile label>{{ $t("menuItems.switchWallet") }}</q-item-tile>
                     </q-item-main>
                 </q-item>
                 <q-item v-close-overlay @click.native="openSettings">
                     <q-item-main>
-                        <q-item-tile label>Settings</q-item-tile>
+                        <q-item-tile label>{{ $t("menuItems.settings") }}</q-item-tile>
                     </q-item-main>
                 </q-item>
                 <q-item v-if="daemon_type != 'remote'" v-close-overlay @click.native="openPool">
@@ -21,12 +20,12 @@
                 </q-item>
                 <q-item v-close-overlay @click.native="showAbout(true)">
                     <q-item-main>
-                        <q-item-tile label>About</q-item-tile>
+                        <q-item-tile label>{{ $t("menuItems.about") }}</q-item-tile>
                     </q-item-main>
                 </q-item>
                 <q-item v-close-overlay @click.native="exit">
                     <q-item-main>
-                        <q-item-tile label>Exit Ryo GUI Wallet</q-item-tile>
+                        <q-item-tile label>{{ $t("menuItems.exit") }}</q-item-tile>
                     </q-item-main>
                 </q-item>
             </q-list>
@@ -38,20 +37,23 @@
     <q-modal minimized ref="aboutModal">
         <div class="about-modal">
 
-            <img class="q-mb-md" src="statics/ryo-wallet.svg" height="42" />
+            <img class="q-mb-md" src="statics/arqma.svg" height="42" />
 
-            <p class="q-my-sm">Version: ATOM v{{version}}-v{{daemonVersion}}</p>
-            <p class="q-my-sm">Copyright (c) 2019, Ryo Currency Project</p>
+            <p class="q-my-sm">Wallet Version: v{{version}}</p>
+            <p class="q-my-sm">Daemon Version: v{{daemonVersion}}</p>
+            <p class="q-my-sm">Copyright (c) 2018-2019, ArQmA Project</p>
+            <p class="q-my-sm">Copyright (c) 2018-2019, Ryo Currency Project</p>
             <p class="q-my-sm">All rights reserved.</p>
 
             <div class="q-mt-md q-mb-lg external-links">
                 <p>
-                    <a @click="openExternal('https://ryo-currency.com/')" href="#">https://ryo-currency.com/</a>
+                    <a @click="openExternal('https://arqma.com/')" href="#">https://arqma.com/</a>
                 </p>
                 <p>
-                    <a @click="openExternal('https://t.me/ryocurrency')" href="#">Telegram</a> -
-                    <a @click="openExternal('https://discord.gg/GFQmFtx')" href="#">Discord</a> -
-                    <a @click="openExternal('https://www.reddit.com/r/ryocurrency/')" href="#">Reddit</a>
+                    <a @click="openExternal('https://telegram.arqma.com')" href="#">Telegram</a> -
+                    <a @click="openExternal('https://chat.arqma.com')" href="#">Discord</a> -
+                    <a @click="openExternal('https://www.reddit.com/r/arqma/')" href="#">Reddit</a> -
+                    <a @click="openExternal('https://github.com/arqma/arqma-electron-wallet')" href="#">Github</a>
                 </p>
             </div>
 
@@ -107,18 +109,25 @@ export default {
             this.$refs.settingsModal.isVisible = true
         },
         openPool () {
-            this.$refs.poolModal.isVisible = true
+        this.$refs.poolModal.isVisible = true
         },
         switchWallet () {
+            // If the rpc is syncing then we want to tell the user to restart
+            if (this.isRPCSyncing) {
+                this.$gateway.confirmClose(this.$t("dialog.switchWallet.restartMessage"), true)
+                return
+            }
+
+            // Allow switching normally because rpc won't be blocked
             this.$q.dialog({
-                title: "Switch wallet",
-                message: "Are you sure you want to close the current wallet?",
+                title: this.$t("dialog.switchWallet.title"),
+                message: this.$t("dialog.switchWallet.closeMessage"),
                 ok: {
-                    label: "CLOSE"
+                    label: this.$t("dialog.buttons.ok")
                 },
                 cancel: {
                     flat: true,
-                    label: "CANCEL",
+                    label: this.$t("dialog.buttons.cancel"),
                     color: this.theme=="dark"?"white":"dark"
                 }
             }).then(() => {
@@ -128,12 +137,13 @@ export default {
                     // short delay to prevent wallet data reaching the
                     // websocket moments after we close and reset data
                     this.$store.dispatch("gateway/resetWalletData")
+                    this.$store.dispatch("gateway/resetMarketData")
                 }, 250);
             }).catch(() => {
             })
         },
         exit () {
-            this.$gateway.confirmClose("Are you sure you want to exit?")
+            this.$gateway.confirmClose(this.$t("dialog.exit.message"))
         }
     },
     components: {

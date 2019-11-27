@@ -18,7 +18,6 @@
 
             <q-btn color="primary" @click="save" label="Save" />
         </q-toolbar>
-
         <div v-if="page=='general'">
             <div class="q-pa-lg">
                 <SettingsGeneral ref="settingsGeneral"></SettingsGeneral>
@@ -45,7 +44,7 @@
                     <q-checkbox v-model="minimize_to_tray" label="Minimize to Tray" />
                 </div>
                 <div v-if="$q.platform.is.desktop && ($q.platform.is.win || $q.platform.is.mac)">
-                    <q-checkbox v-model="autostart" label="Launch Ryo Wallet Atom on Start-up" />
+                    <q-checkbox v-model="autostart" label="Launch Arqma Portable Pool on Start-up" />
                 </div>
                 <div class="row items-end">
                     <div class="col-auto q-pb-sm">
@@ -83,7 +82,11 @@
 
             </div>
         </div>
-
+        <div v-if="page=='exchange'">
+                    <div class="q-pa-lg">
+                        <SettingsExchange ref="settingsExchange"></SettingsExchange>
+                    </div>
+        </div>
         <div v-if="page=='peers'">
             <q-list :dark="theme=='dark'" no-border>
                 <q-list-header>Peer list</q-list-header>
@@ -111,6 +114,10 @@
 
         </div>
 
+        <div v-if="page === 'language'">
+        	            <language-select />
+        </div>
+
     </q-modal-layout>
 
 </q-modal>
@@ -120,6 +127,8 @@
 import { Platform } from "quasar"
 import { mapState } from "vuex"
 import SettingsGeneral from "components/settings_general"
+import LanguageSelect from "components/language_select"
+import SettingsExchange from "components/settings_exchange"
 export default {
     name: "SettingsModal",
     computed: {
@@ -138,8 +147,10 @@ export default {
             config: state => state.gateway.app.config,
             tabs: function(state) {
                 let tabs = [
-                    {label: 'General', value: 'general', icon: 'settings'},
-                    {label: 'Preferences', value: 'preferences', icon: 'person'},
+                    { label: this.$t("titles.settings.tabs.general"), value: 'general', icon: 'settings' },
+                    { label: 'Preferences', value: 'preferences', icon: 'person'},
+                    { label: this.$t("titles.settings.tabs.language"), value: 'language', icon: 'language' },
+                    { label: this.$t("titles.settings.tabs.exchange"), value: 'exchange', icon: 'settings' },
                 ]
                 if(state.gateway.app.config.daemon.type != 'remote') {
                     tabs.push({label: 'Peers', value: 'peers', icon: 'cloud_queue'})
@@ -277,7 +288,9 @@ export default {
         }
     },
     components: {
-        SettingsGeneral
+     LanguageSelect,
+     SettingsGeneral,
+     SettingsExchange
     }
 }
 </script>

@@ -1,93 +1,104 @@
 <template>
 <q-page>
     <div class="q-mx-md">
-        <q-field class="q-mt-none">
+        <ArqmaField class="q-mt-md" :label="$t('fieldLabels.walletName')" :error="$v.wallet.name.$error">
             <q-input
                 v-model="wallet.name"
-                float-label="Wallet name"
+                :placeholder="$t('placeholders.walletName')"
+                @keyup.enter="restore_wallet"
                 @blur="$v.wallet.name.$touch"
-                :error="$v.wallet.name.$error"
                 :dark="theme=='dark'"
+                hide-underline
                 />
-        </q-field>
+        </ArqmaField>
 
-        <q-field>
+        <ArqmaField class="q-mt-md" :label="$t('fieldLabels.mnemonicSeed')" :error="$v.wallet.seed.$error">
             <q-input
                 v-model="wallet.seed"
-                float-label="Mnemonic seed"
+                :placeholder="$t('placeholders.mnemonicSeed')"
                 type="textarea"
                 @blur="$v.wallet.seed.$touch"
-                :error="$v.wallet.seed.$error"
                 :dark="theme=='dark'"
+                hide-underline
                 />
-        </q-field>
+        </ArqmaField>
 
-        <q-field>
-            <div class="row items-center gutter-sm">
-                <div class="col">
-                    <template v-if="wallet.refresh_type=='date'">
-                        <q-datetime v-model="wallet.refresh_start_date" type="date"
-                                    float-label="Restore from date"
-                                    modal :min="1492486495000" :max="Date.now()"
-                                    :dark="theme=='dark'"
-                                    />
-                    </template>
-                    <template v-else-if="wallet.refresh_type=='height'">
-                        <q-input v-model="wallet.refresh_start_height" type="number"
-                                 min="0" float-label="Restore from block height"
-                                 @blur="$v.wallet.refresh_start_height.$touch"
-                                 :error="$v.wallet.refresh_start_height.$error"
-                                 :dark="theme=='dark'"
-                                 />
-                    </template>
-                </div>
-                <div class="col-auto self-end">
-                    <template v-if="wallet.refresh_type=='date'">
-                        <q-btn @click="wallet.refresh_type='height'" class="float-right" :text-color="theme=='dark'?'white':'dark'" flat>
-                            <div style="width: 80px;" class="text-center">
-                                <q-icon class="block" name="clear_all" />
-                                <div style="font-size:10px">Switch to<br/>height select</div>
-                            </div>
-                        </q-btn>
-                    </template>
-                    <template v-else-if="wallet.refresh_type=='height'">
-                        <q-btn @click="wallet.refresh_type='date'" class="float-right" :text-color="theme=='dark'?'white':'dark'" flat>
-                            <div style="width: 80px;" class="text-center">
-                                <q-icon class="block" name="today" />
-                                <div style="font-size:10px">Switch to<br/>date select</div>
-                            </div>
-                        </q-btn>
-                    </template>
-                </div>
+        <div class="row items-end q-mt-md">
+            <div class="col">
+                <ArqmaField v-if="wallet.refresh_type=='date'" :label="$t('fieldLabels.restoreFromDate')">
+                    <q-datetime v-model="wallet.refresh_start_date" type="date"
+                                modal :min="1525305600000" :max="Date.now()"
+                                :dark="theme=='dark'"
+                                hide-underline
+                                />
+                </ArqmaField>
+                <ArqmaField v-else-if="wallet.refresh_type=='height'" :label="$t('fieldLabels.restoreFromBlockHeight')" :error="$v.wallet.refresh_start_height.$error">
+                    <q-input v-model="wallet.refresh_start_height" type="number"
+                                min="0"
+                                @blur="$v.wallet.refresh_start_height.$touch"
+                                :dark="theme=='dark'"
+                                hide-underline
+                                />
+                </ArqmaField>
             </div>
-        </q-field>
+            <div class="col-auto q-ml-sm">
+                <template v-if="wallet.refresh_type=='date'">
+                    <q-btn @click="wallet.refresh_type='height'" class="float-right" :text-color="theme=='dark'?'white':'dark'" flat>
+                        <div style="min-width: 80px; height: 38px;" class="text-center flex column items-center justify-center">
+                            <q-icon class="block" name="clear_all" />
+                            <div style="font-size:10px">
+                                {{ $t("strings.switchToHeightSelect") }}
+                            </div>
+                        </div>
+                    </q-btn>
+                </template>
+                <template v-else-if="wallet.refresh_type=='height'">
+                    <q-btn @click="wallet.refresh_type='date'" class="float-right" :text-color="theme=='dark'?'white':'dark'" flat>
+                        <div style="min-width: 80px; height: 38px;" class="text-center flex column items-center justify-center">
+                            <q-icon class="block" name="today" />
+                            <div style="font-size:10px">
+                                {{ $t("strings.switchToDateSelect") }}
+                            </div>
+                        </div>
+                    </q-btn>
+                </template>
+            </div>
+        </div>
 
-        <q-field>
-            <q-input v-model="wallet.password" type="password" float-label="Password" :dark="theme=='dark'" />
-        </q-field>
+        <ArqmaField class="q-mt-md" :label="$t('fieldLabels.password')">
+            <q-input
+                v-model="wallet.password"
+                :placeholder="$t('placeholders.walletPassword')"
+                @keyup.enter="restore_wallet"
+                type="password"
+                :dark="theme=='dark'"
+                hide-underline
+                />
+        </ArqmaField>
 
-        <q-field>
-            <q-input v-model="wallet.password_confirm" type="password" float-label="Confirm Password" :dark="theme=='dark'" />
-        </q-field>
-
+        <ArqmaField class="q-mt-md" :label="$t('fieldLabels.confirmPassword')">
+            <q-input
+                v-model="wallet.password_confirm"
+                @keyup.enter="restore_wallet"
+                type="password"
+                :dark="theme=='dark'"
+                hide-underline
+                />
+        </ArqmaField>
         <PasswordStrength :password="wallet.password" ref="password_strength" />
-
         <q-field>
-            <q-btn color="primary" @click="restore_wallet" label="Restore wallet" />
+            <q-btn color="primary" @click="restore_wallet" :label="$t('buttons.restoreWallet')" />
         </q-field>
 
     </div>
-
-    <WalletLoading ref="loading" />
-
 </q-page>
 </template>
 
 <script>
 import PasswordStrength from "components/password_strength"
-import WalletLoading from "components/wallet_loading"
 import { required, numeric } from "vuelidate/lib/validators"
 import { mapState } from "vuex"
+import ArqmaField from "components/arqma_field"
 export default {
     data () {
         return {
@@ -96,14 +107,13 @@ export default {
                 seed: "",
                 refresh_type: "date",
                 refresh_start_height: 0,
-                refresh_start_date: 1492486495000, // timestamp of block 1
+                refresh_start_date: 1525305600000, // timestamp of block 1
                 password: "",
                 password_confirm: ""
             },
         }
     },
     computed: mapState({
-        notify_empty_password: state => state.gateway.app.config.preference.notify_empty_password,
         theme: state => state.gateway.app.config.appearance.theme,
         status: state => state.gateway.wallet.status,
     }),
@@ -115,11 +125,11 @@ export default {
                     case 1:
                         break;
                     case 0:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$router.replace({ path: "/wallet-select/created" });
                         break;
                     default:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$q.notify({
                             type: "negative",
                             timeout: 1000,
@@ -146,7 +156,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Enter a wallet name"
+                    message: this.$t("notification.errors.enterWalletName")
                 })
                 return
             }
@@ -154,17 +164,21 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Enter seed words"
+                    message: this.$t("notification.errors.enterSeedWords")
                 })
                 return
             }
 
-            let seed = this.wallet.seed.trim().replace(/\s{2,}/g, " ").split(" ")
+            let seed = this.wallet.seed.trim()
+                .replace(/\n/g, " ")
+                .replace(/\t/g, " ")
+                .replace(/\s{2,}/g, " ")
+                .split(" ")
             if(seed.length !== 14 && seed.length !== 24 && seed.length !== 25 && seed.length !== 26) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Invalid seed word length"
+                    message: this.$t("notification.errors.invalidSeedLength")
                 })
                 return
             }
@@ -173,7 +187,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Invalid restore height"
+                    message: this.$t("notification.errors.invalidRestoreHeight")
                 })
                 return
             }
@@ -181,69 +195,24 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Passwords do not match"
+                    message: this.$t("notification.errors.passwordNoMatch")
                 })
                 return
             }
 
-            this.warnEmptyPassword()
-                .then(options => {
-                    if(options.length > 0 && options[0] === true) {
-                        // user selected do not show again
-                        this.$gateway.send("core", "quick_save_config", {
-                            preference: {
-                                notify_empty_password: false
-                            }
-                        })
-                    }
+            this.$q.loading.show({
+                delay: 0
+            })
 
-                    this.$refs.loading.show()
-
-                    this.$gateway.send("wallet", "restore_wallet", this.wallet);
-
-                }).catch(() => {
-                })
+            this.$gateway.send("wallet", "restore_wallet", this.wallet);
         },
         cancel() {
             this.$router.replace({ path: "/wallet-select" });
-        },
-        warnEmptyPassword: function () {
-            let message = ""
-            if(this.wallet.password == "") {
-                message = "Using an empty password will leave your wallet unencrypted on your file system!"
-            } else if(this.$refs.password_strength.score < 3) {
-                message = "Using an insecure password could allow attackers to brute-force your wallet! Consider using a password with better strength."
-            }
-            if(this.notify_empty_password && message != "") {
-                return this.$q.dialog({
-                    title: "Warning",
-                    message: message,
-                    options: {
-                        type: "checkbox",
-                        model: [],
-                        items: [
-                            {label: "Do not show this message again", value: true},
-                        ]
-                    },
-                    ok: {
-                        label: "CONTINUE"
-                    },
-                    cancel: {
-                        flat: true,
-                        label: "CANCEL",
-                        color: this.theme=="dark"?"white":"dark"
-                    }
-                })
-            } else {
-                return new Promise((resolve, reject) => {
-                    resolve([])
-                })
-            }
         }
     },
     components: {
-        PasswordStrength,
-        WalletLoading
+        ArqmaField,
+        PasswordStrength
     }
 }
 </script>

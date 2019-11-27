@@ -101,6 +101,11 @@ export default [
                     import ("pages/wallet/addressbook")
             },
             {
+                path: "advanced",
+                component: () =>
+                    import("pages/wallet/advanced")
+            },
+            {
                 path: "txhistory",
                 component: () =>
                     import ("pages/wallet/txhistory")

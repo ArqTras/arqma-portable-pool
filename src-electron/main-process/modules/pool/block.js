@@ -2,7 +2,7 @@ import { randomBytes } from "crypto"
 
 export class Block {
   constructor(pool, template, uniform=true) {
-      console.log(template)
+
       this.pool = pool
       this.template = template
       this.uniform = uniform

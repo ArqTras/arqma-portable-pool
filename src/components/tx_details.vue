@@ -10,10 +10,10 @@
                 icon="reply"
                 />
             <q-toolbar-title>
-                Transaction details
+                {{ $t("titles.transactionDetails") }}
             </q-toolbar-title>
-            <q-btn flat class="q-mr-sm" @click="showTxDetails" label="Show tx details" />
-            <q-btn color="primary" @click="openExplorer" label="View on explorer" />
+            <q-btn flat class="q-mr-sm" @click="showTxDetails" :label="$t('buttons.showTxDetails')" />
+            <q-btn v-if="can_open" color="primary" @click="openExplorer" :label="$t('buttons.viewOnExplorer')" />
         </q-toolbar>
 
         <div class="layout-padding">
@@ -24,19 +24,19 @@
                 </div>
 
                 <div :class="'tx-'+tx.type" v-if="tx.type=='in'">
-                    Incoming transaction
+                    {{ $t("strings.transactions.description", { type: $t("strings.transactions.types.incoming") }) }}
                 </div>
                 <div :class="'tx-'+tx.type" v-else-if="tx.type=='out'">
-                    Outgoing transaction
+                    {{ $t("strings.transactions.description", { type: $t("strings.transactions.types.outgoing") }) }}
                 </div>
                 <div :class="'tx-'+tx.type" v-else-if="tx.type=='pool'">
-                    Pending incoming transaction
+                    {{ $t("strings.transactions.description", { type: $t("strings.transactions.types.pendingIncoming") }) }}
                 </div>
                 <div :class="'tx-'+tx.type" v-else-if="tx.type=='pending'">
-                    Pending outgoing transaction
+                    {{ $t("strings.transactions.description", { type: $t("strings.transactions.types.pendingOutgoing") }) }}
                 </div>
                 <div :class="'tx-'+tx.type" v-else-if="tx.type=='failed'">
-                    Failed transaction
+                    {{ $t("strings.transactions.description", { type: $t("strings.transactions.types.failed") }) }}
                 </div>
 
             </div>
@@ -45,28 +45,35 @@
 
                 <div class="infoBox">
                     <div class="infoBoxContent">
-                        <div class="text"><span>Amount</span></div>
-                        <div class="value"><span><FormatRyo :amount="tx.amount" /></span></div>
+                        <div class="text"><span>{{ $t("strings.transactions.amount") }}</span></div>
+                        <div class="value"><span><FormatArqma :amount="tx.amount" raw-value /></span></div>
                     </div>
                 </div>
 
                 <div class="infoBox">
                     <div class="infoBoxContent">
-                        <div class="text"><span>Fee <template v-if="tx.type=='in'||tx.type=='pool'">(paid by sender)</template></span></div>
-                        <div class="value"><span><FormatRyo :amount="tx.fee" /></span></div>
+                        <div class="text">
+                            <span>
+                                {{ $t("strings.transactions.fee") }}
+                                <template v-if="tx.type=='in'||tx.type=='pool'">
+                                    ({{ $t("strings.transactions.paidBySender") }})
+                                </template>
+                            </span>
+                        </div>
+                        <div class="value"><span><FormatArqma :amount="tx.fee" raw-value /></span></div>
                     </div>
                 </div>
 
                 <div class="infoBox">
                     <div class="infoBoxContent">
-                        <div class="text"><span>Height</span></div>
+                        <div class="text"><span>{{ $t("strings.blockHeight") }}</span></div>
                         <div class="value"><span>{{ tx.height }}</span></div>
                     </div>
                 </div>
 
                 <div class="infoBox">
                     <div class="infoBoxContent">
-                        <div class="text"><span>Timestamp</span></div>
+                        <div class="text"><span>{{ $t("strings.transactions.timestamp") }}</span></div>
                         <div class="value"><span>{{ formatDate(tx.timestamp*1000) }}</span></div>
                     </div>
                 </div>
@@ -74,22 +81,21 @@
             </div>
 
 
-            <h6 class="q-mt-xs q-mb-none text-weight-light">Transaction id</h6>
+            <h6 class="q-mt-xs q-mb-none text-weight-light">{{ $t("strings.transactionID") }}</h6>
             <p class="monospace break-all">{{ tx.txid }}</p>
 
-            <h6 class="q-mt-xs q-mb-none text-weight-light">Payment id</h6>
+            <h6 class="q-mt-xs q-mb-none text-weight-light">{{ $t("strings.paymentID") }}</h6>
             <p class="monospace break-all">{{ tx.payment_id ? tx.payment_id : 'N/A' }}</p>
 
 
             <div v-if="tx.type=='in' || tx.type=='pool'">
                 <q-list no-border>
-                    <q-list-header class="q-px-none">Incoming transaction sent to:</q-list-header>
+                    <q-list-header class="q-px-none">
+                        {{ $t("strings.transactions.sentTo", { type: $t("strings.transactions.types.incoming") }) }}:
+                    </q-list-header>
                     <q-item class="q-px-none">
-                        <q-item-side>
-                            <Identicon :address="in_tx_address_used.address" ref="identicon" />
-                        </q-item-side>
                         <q-item-main>
-                            <q-item-tile label>{{ in_tx_address_used.address_index_text }}</q-item-tile>
+                            <q-item-tile label class="non-selectable">{{ in_tx_address_used.address_index_text }}</q-item-tile>
                             <q-item-tile class="monospace ellipsis" sublabel>{{ in_tx_address_used.address }}</q-item-tile>
                         </q-item-main>
 
@@ -97,12 +103,7 @@
                             <q-list link separator style="min-width: 150px; max-height: 300px;">
                                 <q-item v-close-overlay
                                         @click.native="copyAddress(in_tx_address_used.address, $event)">
-                                    <q-item-main label="Copy address" />
-                                </q-item>
-
-                                <q-item v-close-overlay
-                                        @click.native="$refs.identicon.saveIdenticon()">
-                                    <q-item-main label="Save identicon to file" />
+                                    <q-item-main :label="$t('menuItems.copyAddress')" />
                                 </q-item>
                             </q-list>
                         </q-context-menu>
@@ -113,28 +114,21 @@
 
             <div v-else-if="tx.type=='out' || tx.type=='pending'">
                 <q-list no-border>
-                    <q-list-header class="q-px-none">Outgoing transaction sent to:</q-list-header>
+                    <q-list-header class="q-px-none">
+                        {{ $t("strings.transactions.sentTo", { type: $t("strings.transactions.types.outgoing") }) }}:
+                    </q-list-header>
                     <template v-if="out_destinations">
-                        <q-item class="q-px-none" v-for="destination in out_destinations">
-                            <q-item-side>
-                                <Identicon :address="destination.address" ref="identicon" />
-                            </q-item-side>
+                        <q-item class="q-px-none" v-for="(destination, index) in out_destinations" :key="index">
                             <q-item-main>
                                 <q-item-tile label>{{ destination.name }}</q-item-tile>
                                 <q-item-tile class="monospace ellipsis" sublabel>{{ destination.address }}</q-item-tile>
-                                <q-item-tile sublabel><FormatRyo :amount="destination.amount" /></q-item-tile>
+                                <q-item-tile sublabel><FormatArqma :amount="destination.amount" /></q-item-tile>
                             </q-item-main>
-
                             <q-context-menu>
                                 <q-list link separator style="min-width: 150px; max-height: 300px;">
                                     <q-item v-close-overlay
                                             @click.native="copyAddress(destination.address, $event)">
-                                        <q-item-main label="Copy address" />
-                                    </q-item>
-
-                                    <q-item v-close-overlay
-                                            @click.native="$refs.identicon.saveIdenticon()">
-                                        <q-item-main label="Save identicon to file" />
+                                        <q-item-main :label="$t('menuItems.copyAddress')" />
                                     </q-item>
                                 </q-list>
                             </q-context-menu>
@@ -143,11 +137,8 @@
                     </template>
                     <template v-else>
                         <q-item class="q-px-none">
-                            <q-item-side>
-                                <Identicon address="" />
-                            </q-item-side>
                             <q-item-main>
-                                <q-item-tile label>Destination unknown</q-item-tile>
+                                <q-item-tile label>{{ $t('strings.destinationUnknown') }}</q-item-tile>
                             </q-item-main>
                         </q-item>
                     </template>
@@ -156,7 +147,7 @@
 
             <q-field class="q-mt-md">
                 <q-input
-                    v-model="txNotes" float-label="Transaction notes"
+                    v-model="txNotes" :float-label="$t('fieldLabels.transactionNotes')"
                     :dark="theme=='dark'"
                     type="textarea" rows="2" />
             </q-field>
@@ -165,7 +156,7 @@
                 <q-btn
                     :disable="!is_ready"
                     :text-color="theme=='dark'?'white':'dark'"
-                    @click="saveTxNotes" label="Save tx notes" />
+                    @click="saveTxNotes" :label="$t('buttons.saveTxNotes')" />
             </q-field>
 
         </div>
@@ -180,13 +171,16 @@ const { clipboard } = require("electron")
 import { mapState } from "vuex"
 import { date } from "quasar"
 const { formatDate } = date
-import Identicon from "components/identicon"
 import TxTypeIcon from "components/tx_type_icon"
-import FormatRyo from "components/format_ryo"
+import FormatArqma from "components/format_arqma"
 export default {
     name: "TxDetails",
     computed: mapState({
         theme: state => state.gateway.app.config.appearance.theme,
+        can_open (state) {
+            const { net_type } = state.gateway.app.config.app
+            return net_type !== "stagenet"
+        },
         in_tx_address_used (state) {
             let i
             let used_addresses = state.gateway.wallet.address_list.primary.concat(state.gateway.wallet.address_list.used)
@@ -194,9 +188,9 @@ export default {
                 if(used_addresses[i].address_index == this.tx.subaddr_index.minor) {
                     let address_index_text = ""
                     if(used_addresses[i].address_index === 0) {
-                        address_index_text = "Primary address"
+                        address_index_text = this.$t("strings.addresses.primaryAddress")
                     } else {
-                        address_index_text = "Sub-address (Index: "+used_addresses[i].address_index+")"
+                        address_index_text = this.$t("strings.addresses.subAddress") + " (" + this.$t('strings.addresses.subAddressIndex', { index: used_addresses[i].address_index}) + ")"
                     }
                     return {
                         address: used_addresses[i].address,
@@ -217,9 +211,10 @@ export default {
                 let destination = this.tx.destinations[i]
                 destination.name = ""
                 for(j=0; j < address_book.length; j++) {
-                    console.log(destination.address, address_book[j].address)
                     if(destination.address == address_book[j].address) {
-                        destination.name = address_book[j].description
+                        const { name, description} = address_book[j]
+                        const separator = description === "" ? "" : " - "
+                        destination.name = `${name}${separator}${description}`
                         break;
                     }
                 }
@@ -254,10 +249,10 @@ export default {
     methods: {
         showTxDetails () {
             this.$q.dialog({
-                title: "Transaction details",
+                title: this.$t("dialog.transactionDetails.title"),
                 message: JSON.stringify(this.tx, null, 2),
                 ok: {
-                    label: "close",
+                    label: this.$t("dialog.transactionDetails.ok"),
                     color: "primary",
                 },
             }).then(() => {
@@ -272,7 +267,7 @@ export default {
             this.$q.notify({
                 timeout: 1000,
                 type: "positive",
-                message: "Transaction notes saved"
+                message: this.$t("notification.positive.transactionNotesSaved")
             })
             this.$gateway.send("wallet", "save_tx_notes", {txid: this.tx.txid, note: this.txNotes})
         },
@@ -291,14 +286,13 @@ export default {
             this.$q.notify({
                 type: "positive",
                 timeout: 1000,
-                message: "Address copied to clipboard"
+                message: this.$t("notification.positive.addressCopied")
             })
         }
     },
     components: {
-        Identicon,
         TxTypeIcon,
-        FormatRyo
+        FormatArqma
     }
 }
 </script>

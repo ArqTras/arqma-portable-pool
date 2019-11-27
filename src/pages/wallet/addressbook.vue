@@ -1,107 +1,43 @@
 <template>
-<q-page>
+<q-page class="address-book">
 
-    <div class="row q-pt-sm q-mx-md q-mb-none items-center non-selectable" style="height: 44px;">
-
-        <div class="col-8">
-            <q-icon name="person" size="24px" /> Address book
-        </div>
-
-        <div class="col-4">
-        </div>
-
+    <div class="header row q-pt-md q-pb-xs q-mx-md q-mb-none items-center non-selectable">
+            {{ $t("titles.addressBook") }}
     </div>
 
-    <template v-if="address_book_starred.length || address_book.length">
-        <q-list link no-border :dark="theme=='dark'">
-
-            <q-item v-for="(entry, index) in address_book_starred" @click.native="details(entry)">
-                <q-item-side>
-                    <Identicon :address="entry.address" :ref="`${index}-starredIdenticon`" />
-                </q-item-side>
+    <template v-if="address_book_combined.length">
+        <q-list link no-border :dark="theme=='dark'" class="arqma-list">
+            <q-item class="arqma-list-item" v-for="(entry, index) in address_book_combined" @click.native="details(entry)" :key="`${entry.address}-${entry.name}`">
                 <q-item-main>
-                    <q-item-tile class="monospace ellipsis" label>{{ entry.address }}</q-item-tile>
-                    <q-item-tile sublabel>{{ entry.name }}</q-item-tile>
+                    <q-item-tile class="ellipsis" label>{{ entry.address }}</q-item-tile>
+                    <q-item-tile sublabel class="non-selectable">{{ entry.name }}</q-item-tile>
                 </q-item-main>
                 <q-item-side>
+                    <q-icon size="24px" :name="entry.starred ? 'star' : 'star_border'" />
                     <q-btn
-                        color="primary" style="width:25px; margin-right: 10px;"
-                        size="sm" icon="call_made"
+                        color="secondary"
+                        style="margin-left: 10px;"
+                        :label="$t('buttons.send')"
                         :disabled="view_only"
-                        @click="sendToAddress(entry, $event)">
-                        <q-tooltip anchor="center left" self="center right" :offset="[5, 10]">
-                            Send coins
-                        </q-tooltip>
-                    </q-btn>
-                    <q-icon size="24px" name="star" />
+                        @click="sendToAddress(entry, $event)"
+                    />
                 </q-item-side>
 
                 <q-context-menu>
                     <q-list link separator style="min-width: 150px; max-height: 300px;">
                         <q-item v-close-overlay
                                 @click.native="details(entry)">
-                            <q-item-main label="Show details" />
+                            <q-item-main :label="$t('menuItems.showDetails')" />
                         </q-item>
 
                         <q-item v-close-overlay
                                 @click.native="sendToAddress(entry, $event)">
-                            <q-item-main label="Send to this address" />
+                            <q-item-main :label="$t('menuItems.sendToThisAddress')" />
                         </q-item>
 
                         <q-item v-close-overlay
                                 @click.native="copyAddress(entry, $event)">
-                            <q-item-main label="Copy address" />
-                        </q-item>
-
-                        <q-item v-close-overlay
-                                @click.native="$refs[`${index}-starredIdenticon`][0].saveIdenticon()">
-                            <q-item-main label="Save identicon to file" />
-                        </q-item>
-                    </q-list>
-                </q-context-menu>
-
-            </q-item>
-            <q-item v-for="(entry, index) in address_book" @click.native="details(entry)">
-                <q-item-side>
-                    <Identicon :address="entry.address" :ref="`${index}-normalIdenticon`" />
-                </q-item-side>
-                <q-item-main>
-                    <q-item-tile class="monospace ellipsis" label>{{ entry.address }}</q-item-tile>
-                    <q-item-tile sublabel>{{ entry.name }}</q-item-tile>
-                </q-item-main>
-                <q-item-side>
-                    <q-btn
-                        color="primary" style="width:25px; margin-right: 10px;"
-                        size="sm" icon="call_made"
-                        :disabled="view_only"
-                        @click="sendToAddress(entry, $event)">
-                        <q-tooltip anchor="center left" self="center right" :offset="[5, 10]">
-                            Send coins
-                        </q-tooltip>
-                    </q-btn>
-                    <q-icon size="24px" name="star_border" />
-                </q-item-side>
-
-                <q-context-menu>
-                    <q-list link separator style="min-width: 150px; max-height: 300px;">
-                        <q-item v-close-overlay
-                                @click.native="details(entry)">
-                            <q-item-main label="Show details" />
-                        </q-item>
-
-                        <q-item v-close-overlay
-                                @click.native="sendToAddress(entry, $event)">
-                            <q-item-main label="Send to this address" />
-                        </q-item>
-
-                        <q-item v-close-overlay
-                                @click.native="copyAddress(entry, $event)">
-                            <q-item-main label="Copy address" />
-                        </q-item>
-
-                        <q-item v-close-overlay
-                                @click.native="$refs[`${index}-normalIdenticon`][0].saveIdenticon()">
-                            <q-item-main label="Save identicon to file" />
+                            <q-item-main :label="$t('menuItems.copyAddress')" />
                         </q-item>
                     </q-list>
                 </q-context-menu>
@@ -110,7 +46,7 @@
         </q-list>
     </template>
     <template v-else>
-        <p class="q-ma-md">Address book is empty</p>
+        <p class="q-ma-md">{{ $t("strings.addressBookIsEmpty") }}</p>
     </template>
 
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -140,6 +76,13 @@ export default {
         address_book_starred: state => state.gateway.wallet.address_list.address_book_starred,
         is_ready (state) {
             return this.$store.getters["gateway/isReady"]
+        },
+        address_book_combined (state) {
+            const starred = this.address_book_starred.map(a => ({ ...a, starred: true }));
+            return [
+                ...starred,
+                ...this.address_book
+            ]
         }
     }),
     methods: {
@@ -174,29 +117,23 @@ export default {
             clipboard.writeText(entry.address)
             if(entry.payment_id) {
                 this.$q.dialog({
-                    title: "Copy address",
-                    message: "There is a payment id associated with this address.\nBe sure to copy the payment id separately.",
+                    title: this.$t("dialog.copyAddress.title"),
+                    message: this.$t("dialog.copyAddress.message"),
                     ok: {
-                        label: "OK"
+                        label: this.$t("dialog.buttons.ok")
                     },
-                }).then(password => {
+                }).catch(() => null).then(password => {
                     this.$q.notify({
                         type: "positive",
                         timeout: 1000,
-                        message: "Address copied to clipboard"
-                    })
-                }).catch(() => {
-                    this.$q.notify({
-                        type: "positive",
-                        timeout: 1000,
-                        message: "Address copied to clipboard"
+                        message: this.$t("notification.positive.addressCopied")
                     })
                 })
             } else {
                 this.$q.notify({
                     type: "positive",
                     timeout: 1000,
-                    message: "Address copied to clipboard"
+                    message: this.$t("notification.positive.addressCopied")
                 })
             }
         }
@@ -209,5 +146,33 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+.address-book {
+    .header {
+        font-size: 14px;
+        font-weight: 500
+    }
+
+    .arqma-list-item {
+        cursor: pointer;
+        padding-top: 12px;
+        padding-bottom: 12px;
+
+        .q-item-sublabel  {
+            font-size: 14px;
+        }
+
+        .q-item-label {
+            font-weight: 400;
+        }
+
+        .q-item-side {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 12px;
+        }
+    }
+
+}
 </style>

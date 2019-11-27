@@ -197,7 +197,7 @@ export class Database {
                     logger.log("error", "Block %s ophaned", [block.hash])
                     this.stmt.blocks_update.run({ status: 1, reward: 0, hash: block.hash })
                 }
-                if(data.result.block_header.depth > 60) {
+                if(data.result.block_header.depth > 18) {
                     logger.log("success", "Block %s unlocked", [block.hash])
                     this.stmt.blocks_update.run({ status: 2, reward: block.reward, hash: block.hash })
                 }

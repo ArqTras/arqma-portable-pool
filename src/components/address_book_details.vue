@@ -5,82 +5,62 @@
         <q-toolbar slot="header" color="dark" inverted>
             <q-btn flat round dense icon="reply" @click="close()" />
             <q-toolbar-title v-if="mode=='new'">
-                Add address book entry
+                {{ $t("strings.addAddressBookEntry") }}
             </q-toolbar-title>
             <q-toolbar-title v-else-if="mode=='edit'">
-                Edit address book entry
+                {{ $t("strings.editAddressBookEntry") }}
             </q-toolbar-title>
 
-            <q-btn v-if="mode=='edit'" flat no-ripple @click="cancelEdit()" label="Cancel" />
-            <q-btn class="q-ml-sm" color="primary" @click="save()" label="Save" />
+            <q-btn v-if="mode=='edit'" flat no-ripple @click="cancelEdit()" :label="$t('buttons.cancel')" />
+            <q-btn class="q-ml-sm" color="primary" @click="save()" :label="$t('buttons.save')" />
 
         </q-toolbar>
-        <div>
+        <div class="address-book-modal q-mx-md">
+            <ArqmaField :label="$t('fieldLabels.address')" :error="$v.newEntry.address.$error">
+                <q-input
+                    v-model="newEntry.address"
+                    :placeholder="address_placeholder"
+                    @blur="$v.newEntry.address.$touch"
+                    :dark="theme=='dark'"
+                    hide-underline
+                    />
+                <q-checkbox
+                    v-model="newEntry.starred"
+                    checked-icon="star"
+                    unchecked-icon="star_border"
+                    class="star-entry"
+                    dark
+                    />
+            </ArqmaField>
+            <ArqmaField :label="$t('fieldLabels.name')">
+                <q-input
+                    v-model="newEntry.name"
+                    :dark="theme=='dark'"
+                    hide-underline
+                    />
+            </ArqmaField>
+            <ArqmaField :label="$t('fieldLabels.paymentId')" :error="$v.newEntry.payment_id.$error" optional>
+                <q-input
+                    v-model="newEntry.payment_id"
+                    :placeholder="$t('placeholders.hexCharacters', { count: '16 or 64' })"
+                    @blur="$v.newEntry.payment_id.$touch"
+                    :dark="theme=='dark'"
+                    hide-underline
+                    />
+            </ArqmaField>
+            <ArqmaField :label="$t('fieldLabels.notes')" optional>
+                <q-input
+                    v-model="newEntry.description"
+                    :placeholder="$t('placeholders.additionalNotes')"
+                    type="textarea"
+                    :dark="theme=='dark'"
+                    hide-underline
+                    />
+            </ArqmaField>
 
-            <q-list no-border :dark="theme=='dark'">
-
-                <q-item>
-                    <q-item-side>
-                        <Identicon :address="newEntry.address" menu />
-                    </q-item-side>
-                    <q-item-main>
-                        <q-field>
-                            <q-input v-model="newEntry.address" float-label="Address"
-                                     @blur="$v.newEntry.address.$touch"
-                                     :error="$v.newEntry.address.$error"
-                                     :dark="theme=='dark'"
-                                     />
-                        </q-field>
-                    </q-item-main>
-                </q-item>
-
-                <q-item>
-                    <q-item-main>
-                        <q-field>
-                            <q-input v-model="newEntry.name" float-label="Name" :dark="theme=='dark'" />
-                        </q-field>
-                    </q-item-main>
-                    <q-item-side>
-                        <q-checkbox
-                            v-model="newEntry.starred"
-                            checked-icon="star"
-                            unchecked-icon="star_border"
-                            class="star-entry"
-                            />
-                    </q-item-side>
-                </q-item>
-
-                <q-item>
-                    <q-item-main>
-                        <q-field>
-                            <q-input v-model="newEntry.payment_id" float-label="Payment ID (optional)"
-                                     @blur="$v.newEntry.payment_id.$touch"
-                                     :error="$v.newEntry.payment_id.$error"
-                                     :dark="theme=='dark'"
-                                     />
-                        </q-field>
-                    </q-item-main>
-                </q-item>
-
-                <q-item>
-                    <q-item-main>
-                        <q-field>
-                            <q-input v-model="newEntry.description" type="textarea" float-label="Notes (optional)" :dark="theme=='dark'" />
-                        </q-field>
-                    </q-item-main>
-                </q-item>
-
-
-                <q-item v-if="mode=='edit'">
-                    <q-item-main>
-                        <q-field>
-                            <q-btn class="float-right" color="red" @click="deleteEntry()" label="Delete" />
-                        </q-field>
-                    </q-item-main>
-                </q-item>
-
-
-            </q-list>
+            <q-field v-if="mode=='edit'">
+                <q-btn class="float-right" color="red" @click="deleteEntry()" :label="$t('buttons.delete')" />
+            </q-field>
         </div>
     </q-modal-layout>
 
@@ -88,17 +68,17 @@
         <q-toolbar slot="header" color="dark" inverted>
             <q-btn flat round dense icon="reply" @click="close()" />
             <q-toolbar-title>
-                Address book details
+                {{ $t('strings.addressBookDetails') }}
             </q-toolbar-title>
             <q-btn class="q-mr-sm"
                    flat no-ripple
                    :disable="!is_ready"
-                   @click="edit()" label="Edit" />
+                   @click="edit()" :label="$t('buttons.edit')" />
             <q-btn
                 color="primary"
                 :disabled="view_only"
                 @click="sendToAddress"
-                label="Send coins" />
+                :label="$t('buttons.sendCoins')" />
         </q-toolbar>
         <div class="layout-padding">
 
@@ -107,19 +87,17 @@
                 <AddressHeader :address="entry.address"
                                :title="entry.name"
                                :payment_id="entry.payment_id"
-                               :extra="entry.description ? 'Notes: '+entry.description : ''"
+                               :extra="entry.description ? $t('strings.notes')+': '+entry.description : ''"
                                />
-
-
 
                 <div class="q-mt-lg">
 
                     <div class="non-selectable">
                         <q-icon name="history" size="24px" />
-                        <span class="vertical-middle q-ml-xs">Recent transactions with this address</span>
+                        <span class="vertical-middle q-ml-xs">{{ $t('strings.recentTransactionsWithAddress') }}</span>
                     </div>
 
-                    <TxList type="in" :limit="5" :to-outgoing-address="entry.address" />
+                    <TxList type="all_in" :limit="5" :to-outgoing-address="entry.address" :key="entry.address"/>
 
                 </div>
 
@@ -137,6 +115,7 @@ import { mapState } from "vuex"
 import Identicon from "components/identicon"
 import AddressHeader from "components/address_header"
 import TxList from "components/tx_list"
+import ArqmaField from "components/arqma_field"
 import { payment_id, address } from "src/validators/common"
 import { required } from "vuelidate/lib/validators"
 export default {
@@ -161,11 +140,27 @@ export default {
         view_only: state => state.gateway.wallet.info.view_only,
         is_ready (state) {
             return this.$store.getters["gateway/isReady"]
+        },
+        address_placeholder (state) {
+            const wallet = state.gateway.wallet.info;
+            const prefix = (wallet && wallet.address && wallet.address[0]) || "L";
+            return `${prefix}..`;
         }
     }),
     validations: {
         newEntry: {
-            address: { required, address },
+            address: {
+                required,
+                isAddress(value) {
+                    if (value === '') return true
+
+                    return new Promise(resolve => {
+                        address(value, this.$gateway)
+                            .then(() => resolve(true))
+                            .catch(e => resolve(false))
+                    });
+                }
+            },
             payment_id: { payment_id }
         }
     },
@@ -177,7 +172,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Address not valid"
+                    message: this.$t("notification.errors.invalidAddress")
                 })
                 return
             }
@@ -186,7 +181,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Payment id not valid"
+                    message: this.$t("notification.errors.invalidPaymentId")
                 })
                 return
             }
@@ -235,7 +230,8 @@ export default {
     components: {
         AddressHeader,
         Identicon,
-        TxList
+        TxList,
+        ArqmaField
     }
 }
 </script>
@@ -243,12 +239,14 @@ export default {
 <style lang="scss">
 .address-book-details {
 
-    .q-field {
-        margin: 0 10px 20px;
-    }
-    .q-checkbox.star-entry .q-checkbox-icon {
-        font-size:40px;
-        margin-left: 10px;
+    .address-book-modal {
+        > .arqma-field {
+            margin-top: 16px;
+        }
+
+        .star-entry {
+            padding: 4px;
+        }
     }
 }
 </style>

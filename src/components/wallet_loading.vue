@@ -1,6 +1,6 @@
 <template>
 <div v-if="visible" class="q-loading animate-fade fullscreen column flex-center">
-    <q-spinner color="white" size="80px" />
+    <q-spinner color="blue" size="80px" />
     <div v-if="textVisible" class="text-white">
         {{ message }}
     </div>
@@ -25,10 +25,10 @@ export default {
             if(this.wallet.info.height) {
                 return `Scanning... ${this.wallet.info.height} / ${this.target_height} (${this.wallet_pct}%)`
             }
-            return "Loading..."
+            return this.$t('strings.loading')
         },
         target_height() {
-            if(this.config.daemon.type === "local" && !this.daemon.info.is_ready) {
+            if(this.config.daemon && this.config.daemon.type === "local" && !this.daemon.info.is_ready) {
                 return Math.max(this.daemon.info.height, this.daemon.info.target_height)
             } else {
                 return this.daemon.info.height

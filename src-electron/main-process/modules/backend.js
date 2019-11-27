@@ -1,5 +1,6 @@
 import { Daemon } from "./daemon";
 import { WalletRPC } from "./wallet-rpc";
+import { Market } from "./market"
 import { Pool } from "./pool";
 import { ipcMain, dialog } from "electron";
 
@@ -12,6 +13,7 @@ export class Backend {
         this.mainWindow = mainWindow
         this.daemon = null
         this.walletd = null
+        this.market = null
         this.pool = null
         this.config_dir = null
         this.config_file = null
@@ -97,12 +99,25 @@ export class Backend {
                     startDiff: 5000,
                     minDiff: 1000,
                     maxDiff: 100000000,
-                    targetTime: 60,
-                    retargetTime: 30,
+                    targetTime: 30,
+                    retargetTime: 60,
                     variancePercent: 30,
                     maxJump: 100,
                     fixedDiffSeparator: ".",
                 },
+            },
+            market: {
+                info: {
+                    default: 0,
+                    exchanges: []
+                },
+                exchange: {
+                    protocol: "https://",
+                    hostname: "api.coingecko.com",
+                    port: 443,
+                    coin: "arqma",
+                    endpoint: "/api/v3/coins/arqma/tickers"
+                }
             }
 
         }
@@ -139,14 +154,23 @@ export class Backend {
                     this.walletd.handle(data);
                 }
                 break;
+            case "market":
+                if (this.market) {
+                    this.market.handle(data)
+                }
+                break;
+          }
         }
-    }
 
     handle(data) {
 
         let params = data.data
 
         switch (data.method) {
+          case "set_language":
+            this.send("set_language", { lang: params.lang })
+            break
+
             case "quick_save_config":
                 // save only partial config settings
                 Object.keys(params).map(key => {
@@ -386,6 +410,7 @@ export class Backend {
             this.daemon = new Daemon(this);
             this.walletd = new WalletRPC(this);
             this.pool = new Pool(this);
+            this.market = new Market(this);
 
             this.send("set_app_data", {
                 status: {
@@ -412,7 +437,13 @@ export class Backend {
                     this.send("show_notification", {type: "warning", textColor: "black", message: "Warning: arqmad not found, using remote node", timeout: 2000})
                 }
 
+                this.market.start(this.config_data)
+                                .then(() => {
 
+                                })
+                                .catch(error => {
+
+                                })
                 this.daemon.checkRemoteDaemon(this.config_data).then((data) => {
 
                     if(data.hasOwnProperty("error")) {
@@ -601,6 +632,8 @@ export class Backend {
                 process.push(this.walletd.quit())
             if(this.pool)
                 process.push(this.pool.quit())
+            if(this.market)
+                    process.push(this.market.quit())
             Promise.all(process).then(() => {
                 resolve()
             })

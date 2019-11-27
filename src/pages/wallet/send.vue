@@ -1,126 +1,118 @@
 <template>
-<q-page>
+<q-page class="send">
     <template v-if="view_only">
-
-        <div class="row q-pt-sm q-mx-md q-mb-none items-center non-selectable" style="height: 44px;">
-
-            <div class="col-8">
-                <q-icon name="call_made" size="24px" /> Send ARQ
-            </div>
-
-            <div class="col-4">
-            </div>
-
-        </div>
-
         <div class="q-pa-md">
-
-            View-only mode. Please load full wallet in order to send coins.
-
+            {{ $t("strings.viewOnlyMode") }}
         </div>
-
     </template>
     <template v-else>
-
-        <div class="row q-pt-sm q-mx-md q-mb-none items-center non-selectable" style="height: 44px;">
-
-            <div class="col-8">
-                <q-icon name="call_made" size="24px" /> Send ARQ
-            </div>
-
-            <div class="col-4">
-            </div>
-
-        </div>
-
         <div class="q-pa-md">
-
-
-            <div class="row items-end gutter-md">
-
-                <div class="col">
-                    <q-field class="q-ma-none">
-                        <q-input v-model="newTx.amount" float-label="Amount" :dark="theme=='dark'"
-                                 type="number" min="0" :max="unlocked_balance / 1e9" />
-                    </q-field>
-                </div>
-
-                <div>
-                    <q-btn @click="newTx.amount = unlocked_balance / 1e9" :text-color="theme=='dark'?'white':'dark'">All coins</q-btn>
-                </div>
-
-            </div>
-
-            <q-item class="q-pa-none">
-                <q-item-side>
-                    <Identicon :address="newTx.address" menu />
-                </q-item-side>
-                <q-item-main>
-                    <q-field>
-                        <q-input v-model="newTx.address" float-label="Address"
-                                 :dark="theme=='dark'"
-                                 @blur="$v.newTx.address.$touch"
-                                 :error="$v.newTx.address.$error"
-                                 />
-                    </q-field>
-                </q-item-main>
-            </q-item>
-
-            <q-field style="margin-top:0">
-                <q-input v-model="newTx.payment_id" float-label="Uniform Payment ID (optional)"
-                         :dark="theme=='dark'"
-                         @blur="$v.newTx.payment_id.$touch"
-                         :error="$v.newTx.payment_id.$error"
-                         />
-            </q-field>
-
             <div class="row gutter-md">
 
+                <!-- Amount -->
                 <div class="col-6">
-                    <q-field>
-                        <q-select :dark="theme=='dark'"
-                                  v-model="newTx.ringsize"
-                                  float-label="Ring Size"
-                                  :options="ringsizeOptions"
-                                  />
-                    </q-field>
-                </div>
-                <div class="col-6">
-                    <q-field>
-                        <q-select :dark="theme=='dark'"
-                                  v-model="newTx.priority"
-                                  float-label="Priority"
-                                  :options="priorityOptions"
-                                  />
-                    </q-field>
+                    <ArqmaField :label="$t('fieldLabels.amount')" :error="$v.newTx.amount.$error">
+                        <q-input v-model="newTx.amount"
+                            :dark="theme=='dark'"
+                            type="number"
+                            min="0"
+                            :max="unlocked_balance / 1e9"
+                            placeholder="0"
+                            @blur="$v.newTx.amount.$touch"
+                            hide-underline
+                        />
+                        <q-btn color="secondary" @click="newTx.amount = unlocked_balance / 1e9" :text-color="theme=='dark'?'white':'dark'">
+                            {{ $t("buttons.all") }}
+                        </q-btn>
+                    </ArqmaField>
                 </div>
 
+                <!-- Priority -->
+                <div class="col-6">
+                    <ArqmaField :label="$t('fieldLabels.priority')">
+                        <q-select :dark="theme=='dark'"
+                            v-model="newTx.priority"
+                            :options="priorityOptions"
+                            hide-underline
+                        />
+                    </ArqmaField>
+                </div>
             </div>
 
+            <!-- Address -->
+            <div class="col q-mt-sm">
+                <ArqmaField :label="$t('fieldLabels.address')" :error="$v.newTx.address.$error">
+                     <q-input v-model="newTx.address"
+                        :dark="theme=='dark'"
+                        @blur="$v.newTx.address.$touch"
+                        :placeholder="address_placeholder"
+                        hide-underline
+                    />
+                    <q-btn color="secondary" :text-color="theme=='dark'?'white':'dark'" to="addressbook">
+                        {{ $t("buttons.contacts") }}
+                    </q-btn>
+                </ArqmaField>
+            </div>
 
+            <!-- Payment ID -->
+            <div class="col q-mt-sm">
+                <ArqmaField :label="$t('fieldLabels.paymentId')" :error="$v.newTx.payment_id.$error" optional>
+                     <q-input v-model="newTx.payment_id"
+                        :dark="theme=='dark'"
+                        @blur="$v.newTx.payment_id.$touch"
+                        :placeholder="$t('placeholders.hexCharacters', { count: '16 or 64' })"
+                        hide-underline
+                    />
+                </ArqmaField>
+            </div>
+
+            <!-- Notes -->
+            <div class="col q-mt-sm">
+                <ArqmaField :label="$t('fieldLabels.notes')" optional>
+                     <q-input v-model="newTx.note"
+                        type="textarea"
+                        :dark="theme=='dark'"
+                        :placeholder="$t('placeholders.transactionNotes')"
+                        hide-underline
+                    />
+                </ArqmaField>
+            </div>
+
+            <!-- Save to address book -->
             <q-field>
-                <q-checkbox v-model="newTx.address_book.save" label="Save to address book" :dark="theme=='dark'" />
+                <q-checkbox v-model="newTx.address_book.save" :label="$t('strings.saveToAddressBook')" :dark="theme=='dark'" />
             </q-field>
 
             <div v-if="newTx.address_book.save">
-                <q-field>
-                    <q-input v-model="newTx.address_book.name" float-label="Name" :dark="theme=='dark'" />
-                </q-field>
-                <q-field>
-                    <q-input v-model="newTx.address_book.description" type="textarea" rows="2" float-label="Notes" :dark="theme=='dark'" />
-                </q-field>
+                <ArqmaField :label="$t('fieldLabels.name')" optional>
+                     <q-input v-model="newTx.address_book.name"
+                        :dark="theme=='dark'"
+                        :placeholder="$t('placeholders.addressBookName')"
+                        hide-underline
+                    />
+                </ArqmaField>
+                <ArqmaField class="q-mt-sm" :label="$t('fieldLabels.notes')" optional>
+                     <q-input v-model="newTx.address_book.description"
+                        type="textarea"
+                        rows="2"
+                        :dark="theme=='dark'"
+                        :placeholder="$t('placeholders.additionalNotes')"
+                        hide-underline
+                    />
+                </ArqmaField>
             </div>
 
             <q-field class="q-pt-sm">
                 <q-btn
+                    class="send-btn"
                     :disable="!is_able_to_send"
-                    color="primary" @click="send()" label="Send" />
+                    color="primary" @click="send()" :label="$t('buttons.send')" />
             </q-field>
 
         </div>
 
         <q-inner-loading :visible="tx_status.sending" :dark="theme=='dark'">
-            <q-spinner color="primary" :size="30" />
+            <q-spinner color="blue" :size="30" />
         </q-inner-loading>
 
     </template>
@@ -131,12 +123,14 @@
 <script>
 import { mapState } from "vuex"
 import { required, decimal } from "vuelidate/lib/validators"
-import { payment_id, address } from "src/validators/common"
+import { payment_id, address, greater_than_zero } from "src/validators/common"
 import Identicon from "components/identicon"
+import ArqmaField from "components/arqma_field"
+import WalletPassword from "src/mixins/wallet_password"
 const objectAssignDeep = require("object-assign-deep");
+
 export default {
     computed: mapState({
-        notify_no_payment_id: state => state.gateway.app.config.preference.notify_no_payment_id,
         theme: state => state.gateway.app.config.appearance.theme,
         view_only: state => state.gateway.wallet.info.view_only,
         unlocked_balance: state => state.gateway.wallet.info.unlocked_balance,
@@ -146,6 +140,11 @@ export default {
         },
         is_able_to_send (state) {
             return this.$store.getters["gateway/isAbleToSend"]
+        },
+        address_placeholder (state) {
+            const wallet = state.gateway.wallet.info;
+            const prefix = (wallet && wallet.address && wallet.address[0]) || "a";
+            return `${prefix}..`;
         }
     }),
     data () {
@@ -155,7 +154,6 @@ export default {
                 amount: 0,
                 address: "",
                 payment_id: "",
-                ringsize: 25,
                 priority: 0,
                 address_book: {
                     save: false,
@@ -163,16 +161,12 @@ export default {
                     description: ""
                 }
             },
-            ringsizeOptions: [
-                {label: "25 ring members (default)", value: 25},
-                {label: "100 ring members (top secret)", value: 100},
-            ],
             priorityOptions: [
-                {label: "Normal (x1 fee)", value: 0},
-                {label: "High (x2 fee)", value: 1},
-                {label: "High (x4 fee)", value: 2},
-                {label: "High (x20 fee)", value: 3},
-                {label: "Highest (x144 fee)", value: 4},
+                {label: this.$t("strings.priorityOptions.automatic"), value: 0},
+                {label: this.$t("strings.priorityOptions.slow"), value: 1},
+                {label: this.$t("strings.priorityOptions.normal"), value: 2},
+                {label: this.$t("strings.priorityOptions.fast"), value: 3},
+                {label: this.$t("strings.priorityOptions.fastest"), value: 4},
             ],
         }
     },
@@ -180,9 +174,21 @@ export default {
         newTx: {
             amount: {
                 required,
-                decimal
+                decimal,
+                greater_than_zero
             },
-            address: { required, address },
+            address: {
+            required,
+            isAddress(value) {
+                    if (value === '') return true
+
+                    return new Promise(resolve => {
+                        address(value, this.$gateway)
+                            .then(() => resolve(true))
+                            .catch(e => resolve(false))
+                    });
+                }
+            },
             payment_id: { payment_id }
         }
     },
@@ -202,13 +208,13 @@ export default {
                             amount: 0,
                             address: "",
                             payment_id: "",
-                            ringsize: 25,
                             priority: 0,
                             address_book: {
                                 save: false,
                                 name: "",
                                 description: ""
-                            }
+                            },
+                            note: ""
                         }
                         break;
                     case -1:
@@ -241,35 +247,34 @@ export default {
         },
 
         send: function () {
-
             this.$v.newTx.$touch()
 
             if(this.newTx.amount < 0) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Amount cannot be negative"
+                    message: this.$t("notification.errors.negativeAmount")
                 })
                 return
             } else if(this.newTx.amount == 0) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Amount must be greater than zero"
+                    message: this.$t("notification.errors.zeroAmount")
                 })
                 return
             } else if(this.newTx.amount > this.unlocked_balance / 1e9) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Not enough unlocked balance"
+                    message: this.$t("notification.errors.notEnoughBalance")
                 })
                 return
             } else if (this.$v.newTx.amount.$error) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Amount not valid"
+                    message: this.$t("notification.errors.invalidAmount")
                 })
                 return
             }
@@ -279,7 +284,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Address not valid"
+                    message: this.$t("notification.errors.invalidAddress")
                 })
                 return
             }
@@ -288,104 +293,41 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Payment id not valid"
+                    message: this.$t("notification.errors.invalidPaymentId")
                 })
                 return
             }
 
-            this.warnPaymentId()
-                .then(options => {
-                    if(options.length > 0 && options[0] === true) {
-                        // user selected do not show again
-                        this.$gateway.send("core", "quick_save_config", {
-                            preference: {
-                                notify_no_payment_id: false
-                            }
-                        })
-                    }
-
-                    this.$q.dialog({
-                        title: "Transfer",
-                        message: "Enter wallet password to continue.",
-                        prompt: {
-                            model: "",
-                            type: "password"
-                        },
-                        ok: {
-                            label: "SEND"
-                        },
-                        cancel: {
-                            flat: true,
-                            label: "CANCEL",
-                            color: this.theme=="dark"?"white":"dark"
-                        }
-                    }).then(password => {
-                        this.$store.commit("gateway/set_tx_status", {
-                            code: 1,
-                            message: "Sending transaction",
-                            sending: true
-                        })
-                        let newTx = objectAssignDeep.noMutate(this.newTx, {password})
-                        this.$gateway.send("wallet", "transfer", newTx)
-                    }).catch(() => {
-                    })
-
-                }).catch(() => {
+            this.showPasswordConfirmation({
+                title: this.$t("dialog.transfer.title"),
+                noPasswordMessage: this.$t("dialog.transfer.message"),
+                ok: {
+                    label: this.$t("dialog.transfer.ok")
+                },
+            }).then(password => {
+                this.$store.commit("gateway/set_tx_status", {
+                    code: 1,
+                    message: "Sending transaction",
+                    sending: true
                 })
-        },
-
-        warnPaymentId: function () {
-            let has_payment_id = false
-            if(this.newTx.payment_id != "") {
-                has_payment_id = true
-            } else {
-                switch(this.newTx.address.substring(0, 2)) {
-                    case "ar":
-                    case "aRi":
-                        has_payment_id = true
-                        break
-                }
-            }
-
-            let is_subaddress = false
-            switch(this.newTx.address.substring(0, 1)) {
-                case "aRS":
-                    is_subaddress = true
-                    break
-            }
-
-            if(this.notify_no_payment_id && !has_payment_id && !is_subaddress) {
-                return this.$q.dialog({
-                    title: "Transfer",
-                    message: "No Payment ID provided. If you are sending to an exchange your funds may be lost.",
-                    options: {
-                        type: "checkbox",
-                        model: [],
-                        items: [
-                            {label: "Do not show this message again", value: true},
-                        ]
-                    },
-                    ok: {
-                        label: "CONTINUE"
-                    },
-                    cancel: {
-                        flat: true,
-                        label: "CANCEL",
-                        color: this.theme=="dark"?"white":"dark"
-                    }
-                })
-            } else {
-                return new Promise((resolve, reject) => {
-                    resolve([])
-                })
-            }
+                const newTx = objectAssignDeep.noMutate(this.newTx, {password})
+                this.$gateway.send("wallet", "transfer", newTx)
+            }).catch(() => {
+            })
         }
     },
+    mixins: [WalletPassword],
     components: {
-        Identicon
+        Identicon,
+        ArqmaField
     }
 }
 </script>
 
-<style>
+<style lang="scss">
+.send {
+    .send-btn {
+        width: 200px;
+    }
+}
 </style>

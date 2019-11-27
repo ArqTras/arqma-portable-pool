@@ -1,44 +1,61 @@
 <template>
 <q-page>
-    <div class="q-mx-md">
+    <div class="q-mx-md import-wallet">
 
-        <q-field class="q-mt-none">
+        <ArqmaField :label="$t('fieldLabels.newWalletName')" :error="$v.wallet.name.$error">
             <q-input
                 v-model="wallet.name"
-                float-label="New wallet name"
+                :placeholder="$t('placeholders.walletName')"
+                @keyup.enter="import_wallet"
                 @blur="$v.wallet.name.$touch"
-                :error="$v.wallet.name.$error"
                 :dark="theme=='dark'"
+                hide-underline
                 />
-        </q-field>
+        </ArqmaField>
+
+        <ArqmaField :label="$t('fieldLabels.walletFile')" disable-hover :error="$v.wallet.path.$error">
+            <q-input
+                v-model="wallet.path"
+                :placeholder="$t('placeholders.selectAFile')"
+                disable
+                :dark="theme=='dark'"
+                hide-underline
+            />
+            <input type="file" id="walletPath" v-on:change="setWalletPath" ref="fileInput" hidden />
+            <q-btn
+                color="secondary"
+                :label="$t('buttons.selectWalletFile')"
+                v-on:click="selectFile"
+                :text-color="theme=='dark'?'white':'dark'"
+            />
+        </ArqmaField>
+
+        <ArqmaField :label="$t('fieldLabels.password')">
+            <q-input
+                v-model="wallet.password"
+                :placeholder="$t('placeholders.walletPassword')"
+                @keyup.enter="import_wallet"
+                type="password"
+                :dark="theme=='dark'"
+                hide-underline
+            />
+        </ArqmaField>
+
+        <ArqmaField :label="$t('fieldLabels.confirmPassword')">
+            <q-input
+                v-model="wallet.password_confirm"
+                @keyup.enter="import_wallet"
+                type="password"
+                :dark="theme=='dark'"
+                hide-underline
+            />
+        </ArqmaField>
 
         <q-field>
-            <div class="row gutter-sm">
-                <div class="col">
-                    <q-input v-model="wallet.path" stack-label="Wallet file" disable :dark="theme=='dark'" />
-                    <input type="file" id="walletPath" v-on:change="setWalletPath" ref="fileInput" hidden />
-                </div>
-                <div class="col-auto self-end">
-                    <q-btn v-on:click="selectFile" class="float-right" :text-color="theme=='dark'?'white':'dark'">Select wallet file</q-btn>
-                </div>
-            </div>
-        </q-field>
-
-        <q-field>
-            <q-input v-model="wallet.password" type="password" float-label="Password" :dark="theme=='dark'" />
-        </q-field>
-
-        <q-field>
-            <q-input v-model="wallet.password_confirm" type="password" float-label="Confirm Password" :dark="theme=='dark'" />
-        </q-field>
-
-        <q-field>
-            <q-btn color="primary" @click="import_wallet" label="Import wallet" />
+            <q-btn color="primary" @click="import_wallet" :label="$tc('buttons.importWallet', 1)" />
         </q-field>
 
     </div>
-
-    <WalletLoading ref="loading" />
 
 </q-page>
 </template>
@@ -46,7 +63,7 @@
 <script>
 import { required } from "vuelidate/lib/validators"
 import { mapState } from "vuex"
-import WalletLoading from "components/wallet_loading"
+import ArqmaField from "components/arqma_field"
 export default {
     data () {
         return {
@@ -70,11 +87,11 @@ export default {
                     case 1:
                         break;
                     case 0:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$router.replace({ path: "/wallet-select/created" });
                         break;
                     default:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$q.notify({
                             type: "negative",
                             timeout: 1000,
@@ -88,7 +105,8 @@ export default {
     },
     validations: {
         wallet: {
-            name: { required }
+            name: { required },
+            path: { required }
         }
     },
     methods: {
@@ -101,33 +119,60 @@ export default {
         import_wallet() {
             this.$v.wallet.$touch()
 
-            if (this.$v.wallet.$error) {
+            if (this.$v.wallet.name.$error) {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Enter a wallet name"
-                })
-                return
-            }
-            if(this.wallet.password != this.wallet.password_confirm) {
-                this.$q.notify({
-                    type: "negative",
-                    timeout: 1000,
-                    message: "Passwords do not match"
+                    message: this.$t("notification.errors.enterWalletName")
                 })
                 return
             }
 
-            this.$refs.loading.show()
+            if (this.$v.wallet.path.$error) {
+                this.$q.notify({
+                    type: "negative",
+                    timeout: 1000,
+                    message: this.$t("notification.errors.selectWalletFile")
+                })
+                return
+            }
+
+            if (this.wallet.password != this.wallet.password_confirm) {
+                this.$q.notify({
+                    type: "negative",
+                    timeout: 1000,
+                    message: this.$t("notification.errors.passwordNoMatch")
+                })
+                return
+            }
+
+            this.$q.loading.show({
+                delay: 0
+            })
 
             this.$gateway.send("wallet", "import_wallet", this.wallet);
         },
         cancel() {
             this.$router.replace({ path: "/wallet-select" });
         }
+    },
+    components: {
+        ArqmaField
     }
 }
 </script>
 
-<style>
+<style lang="scss">
+.import-wallet {
+    .q-if-disabled {
+        cursor: default !important;
+        .q-input-target {
+            cursor: default !important;
+        }
+    }
+
+    .arqma-field {
+        margin-top: 16px;
+    }
+}
 </style>

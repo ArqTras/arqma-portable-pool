@@ -1,5 +1,6 @@
 import { ipcRenderer } from "electron"
 import { debounce, Notify, Dialog, Loading, LocalStorage } from "quasar"
+import { i18n, changeLanguage } from "src/plugins/i18n"
 
 export class Gateway {
 
@@ -179,6 +180,10 @@ export class Gateway {
                     }
                 })
                 break
+            case "set_language":
+                const { lang } = message.data
+                this.setLanguage(lang)
+                break
 
             case "set_app_data":
                 this.app.store.commit("gateway/set_app_data", message.data)
@@ -201,6 +206,7 @@ export class Gateway {
                 this.app.store.commit("gateway/set_tx_status", message.data)
                 break
 
+
             case "wallet_list":
                 this.app.store.commit("gateway/set_wallet_list", message.data)
                 break
@@ -218,15 +224,32 @@ export class Gateway {
                 Notify.create(Object.assign(notification, message.data))
                 break
 
+
             case "return_to_wallet_select":
                 this.router.replace({ path: "/wallet-select" })
                 setTimeout(() => {
                     // short delay to prevent wallet data reaching the
                     // websocket moments after we close and reset data
                     this.app.store.dispatch("gateway/resetWalletData")
+                    this.app.store.dispatch("gateway/resetMarketData")
                 }, 250);
                 break
 
+            case "set_market_data":
+              this.app.store.commit("gateway/set_market_data", message.data)
+            break
+
         }
+    }
+    setLanguage (lang) {
+        changeLanguage(lang).then(() => {
+            LocalStorage.set("language", lang)
+        }).catch(() => {
+            Notify.create({
+                type: "negative",
+                timeout: 2000,
+                message: i18n.t("notification.errors.failedToSetLanguage", { lang })
+            })
+        })
     }
 }

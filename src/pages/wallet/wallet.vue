@@ -4,58 +4,70 @@
     <AddressHeader :address="info.address" :title="info.name" />
 
     <div class="row">
-
         <div class="infoBoxBalance">
             <div class="infoBox">
                 <div class="infoBoxContent">
-                    <div class="text"><span>Balance</span></div>
-                    <div class="value"><span><FormatRyo :amount="info.balance" /></span></div>
+                    <q-item-tile label>{{ $t("strings.arqmaBalance") }}</q-item-tile>
+                    <div class="value"><span><FormatArqma :amount="info.balance" /></span></div>
                 </div>
             </div>
         </div>
-
+        <div class="infoBoxBalance">
+            <div class="infoBox">
+                <div class="infoBoxContent">
+                    <q-item-tile label>{{ $t("strings.arqmaExchangeBalance") }}</q-item-tile>
+                    <div class="value"><span><FormatBitcoin/></span></div>
+                </div>
+            </div>
+        </div>
         <div>
             <div class="infoBox">
                 <div class="infoBoxContent">
-                    <div class="text"><span>Unlocked balance</span></div>
-                    <div class="value"><span><FormatRyo :amount="info.unlocked_balance" /></span></div>
+                    <q-item-tile label>{{ $t("strings.arqmaUnlockedBalance") }}</q-item-tile>
+                    <div class="value"><span><FormatArqma :amount="info.unlocked_balance" /></span></div>
                 </div>
             </div>
         </div>
-
         <div class="col text-right q-mr-sm">
-            <div class="infoBox q-pt-md">
-                <q-btn icon-right="more_vert" label="Wallet actions" size="md" flat>
+            <div class="infoBox">
+            <q-item-tile icon-right="more_vert" label>{{ $t("placeholders.operations") }}</q-item-tile>
+                <q-btn>{{ $t("placeholders.walletOperations") }}:
                     <q-popover anchor="bottom right" self="top right">
                         <q-list separator link>
                             <q-item :disabled="!is_ready"
-                                    v-close-overlay @click.native="getPrivateKeys()">
-                                <q-item-main>
-                                    <q-item-tile label>Show Private Keys</q-item-tile>
-                                </q-item-main>
-                            </q-item>
-                            <q-item :disabled="!is_ready"
                                     v-close-overlay @click.native="showModal('change_password')">
                                 <q-item-main>
-                                    <q-item-tile label>Change Password</q-item-tile>
-                                </q-item-main>
-                            </q-item>
-                            <q-item :disabled="!is_ready"
-                                    v-close-overlay @click.native="showModal('rescan')">
-                                <q-item-main>
-                                    <q-item-tile label>Rescan Wallet</q-item-tile>
-                                </q-item-main>
-                            </q-item>
-                            <q-item :disabled="!is_ready"
-                                    v-close-overlay @click.native="showModal('key_image')">
-                                <q-item-main>
-                                    <q-item-tile label>Manage Key Images</q-item-tile>
+                                    <q-item-tile label>{{ $t("menuItems.changePassword") }}</q-item-tile>
                                 </q-item-main>
                             </q-item>
                             <q-item :disabled="!is_ready"
                                     v-close-overlay @click.native="deleteWallet()">
                                 <q-item-main>
-                                    <q-item-tile label>Delete Wallet</q-item-tile>
+                                    <q-item-tile label>{{ $t("menuItems.deleteWallet") }}</q-item-tile>
+                                </q-item-main>
+                            </q-item>
+                            <q-item :disabled="!is_ready"
+                                    v-close-overlay @click.native="showModal('export_transactions')">
+                                <q-item-main>
+                                    <q-item-tile label>{{ $t("menuItems.exportTransactions") }}</q-item-tile>
+                                </q-item-main>
+                            </q-item>
+                            <q-item :disabled="!is_ready"
+                                    v-close-overlay @click.native="showModal('key_image')">
+                                <q-item-main>
+                                    <q-item-tile label>{{ $t("menuItems.manageKeyImages") }}</q-item-tile>
+                                </q-item-main>
+                            </q-item>
+                            <q-item :disabled="!is_ready"
+                                    v-close-overlay @click.native="showModal('rescan')">
+                                <q-item-main>
+                                    <q-item-tile label>{{ $t("menuItems.rescanWallet") }}</q-item-tile>
+                                </q-item-main>
+                            </q-item>
+                            <q-item :disabled="!is_ready"
+                                    v-close-overlay @click.native="getPrivateKeys()">
+                                <q-item-main>
+                                    <q-item-tile label>{{ $t("menuItems.showPrivateKeys") }}</q-item-tile>
                                 </q-item-main>
                             </q-item>
                         </q-list>
@@ -66,18 +78,18 @@
 
     </div>
 
-    <h6 class="q-my-none">Recent transactions:</h6>
+    <h6 class="q-my-none">{{ $t("strings.recentTransactionsWithAddress") }}:</h6>
 
     <div style="margin: 0 -16px;">
         <TxList :limit="5" />
     </div>
 
     <q-modal minimized v-model="modals.private_keys.visible" @hide="closePrivateKeys()">
-        <div class="modal-header">Show private keys</div>
+        <div class="modal-header">{{ $t("menuItems.showPrivateKeys") }}</div>
         <div class="q-ma-lg">
 
             <template v-if="secret.mnemonic">
-                <h6 class="q-mb-xs q-mt-lg">Seed words</h6>
+                <h6 class="q-mb-xs q-mt-lg">{{ $t("strings.seedWords") }}</h6>
                 <div class="row">
                     <div class="col">
                         {{ secret.mnemonic }}
@@ -88,7 +100,7 @@
                             size="sm" icon="file_copy"
                             @click="copyPrivateKey('mnemonic', $event)">
                             <q-tooltip anchor="center left" self="center right" :offset="[5, 10]">
-                                Copy seed words
+                                {{ $t("menuItems.copySeedWords") }}
                             </q-tooltip>
                         </q-btn>
                     </div>
@@ -96,7 +108,7 @@
             </template>
 
             <template v-if="secret.view_key != secret.spend_key">
-                <h6 class="q-mb-xs">View key</h6>
+                <h6 class="q-mb-xs">{{ $t("strings.viewKey") }}</h6>
                 <div class="row">
                     <div class="col" style="word-break:break-all;">
                         {{ secret.view_key }}
@@ -107,7 +119,7 @@
                             size="sm" icon="file_copy"
                             @click="copyPrivateKey('view_key', $event)">
                             <q-tooltip anchor="center left" self="center right" :offset="[5, 10]">
-                                Copy view key
+                                {{ $t("menuItems.copyViewKey") }}
                             </q-tooltip>
                         </q-btn>
                     </div>
@@ -115,7 +127,7 @@
             </template>
 
             <template v-if="!/^0*$/.test(secret.spend_key)">
-                <h6 class="q-mb-xs">Spend key</h6>
+                <h6 class="q-mb-xs">{{ $t("strings.spendKey") }}</h6>
                 <div class="row">
                     <div class="col" style="word-break:break-all;">
                         {{ secret.spend_key }}
@@ -126,7 +138,7 @@
                             size="sm" icon="file_copy"
                             @click="copyPrivateKey('spend_key', $event)">
                             <q-tooltip anchor="center left" self="center right" :offset="[5, 10]">
-                                Copy spend key
+                                {{ $t("menuItems.copySpendKey") }}
                             </q-tooltip>
                         </q-btn>
                     </div>
@@ -137,7 +149,7 @@
                 <q-btn
                     color="primary"
                     @click="hideModal('private_keys')"
-                    label="Close"
+                    :label="$t('buttons.close')"
                     />
             </div>
         </div>
@@ -145,27 +157,27 @@
 
 
     <q-modal minimized v-model="modals.rescan.visible">
-        <div class="modal-header">Rescan wallet</div>
+        <div class="modal-header">{{ $t("menuItems.rescanWallet") }}</div>
         <div class="q-ma-lg">
-            <p>Select full rescan or rescan of spent outputs only.</p>
+            <p>{{ $t("strings.rescanModalDescription") }}</p>
 
             <div class="q-mt-lg">
-                <q-radio v-model="modals.rescan.type" val="full" label="Rescan full blockchain" />
+                <q-radio v-model="modals.rescan.type" val="full" :label="$t('fieldLabels.rescanFullBlockchain')" />
             </div>
             <div class="q-mt-sm">
-                <q-radio v-model="modals.rescan.type" val="spent" label="Rescan spent outputs" />
+                <q-radio v-model="modals.rescan.type" val="spent" :label="$t('fieldLabels.rescanSpentOutputs')" />
             </div>
 
             <div class="q-mt-xl text-right">
                 <q-btn
                     flat class="q-mr-sm"
                     @click="hideModal('rescan')"
-                    label="Close"
+                    :label="$t('buttons.close')"
                     />
                 <q-btn
                     color="primary"
                     @click="rescanWallet()"
-                    label="Rescan"
+                    :label="$t('buttons.rescan')"
                     />
             </div>
         </div>
@@ -176,10 +188,10 @@
         <div class="q-ma-lg">
             <div class="row q-mb-md">
                 <div class="q-mr-xl">
-                    <q-radio v-model="modals.key_image.type" val="Export" label="Export" />
+                    <q-radio v-model="modals.key_image.type" val="Export" :label="$t('buttons.export')" />
                 </div>
                 <div>
-                    <q-radio v-model="modals.key_image.type" val="Import" label="Import" />
+                    <q-radio v-model="modals.key_image.type" val="Import" :label="$t('buttons.import')" />
                 </div>
             </div>
 
@@ -191,7 +203,7 @@
                             <input type="file" webkitdirectory directory id="keyImageExportPath" v-on:change="setKeyImageExportPath" ref="keyImageExportSelect" hidden />
                         </div>
                         <div class="col-3">
-                            <q-btn class="float-right" v-on:click="selectKeyImageExportPath">Browse</q-btn>
+                            <q-btn class="float-right" v-on:click="selectKeyImageExportPath">{{ $t("buttons.browse") }}</q-btn>
                         </div>
                     </div>
                 </q-field>
@@ -204,7 +216,7 @@
                             <input type="file" id="keyImageImportPath" v-on:change="setKeyImageImportPath" ref="keyImageImportSelect" hidden />
                         </div>
                         <div class="col-3">
-                            <q-btn class="float-right" v-on:click="selectKeyImageImportPath">Browse</q-btn>
+                            <q-btn class="float-right" v-on:click="selectKeyImageImportPath">{{ $t("buttons.browse") }}</q-btn>
                         </div>
                     </div>
                 </q-field>
@@ -214,42 +226,99 @@
                 <q-btn
                     flat class="q-mr-sm"
                     @click="hideModal('key_image')"
-                    label="Close"
+                    :label="$t('buttons.close')"
                     />
                 <q-btn
                     color="primary"
                     @click="doKeyImages()"
-                    :label="modals.key_image.type"
+                    :label="$t('buttons.export')"
                     />
             </div>
         </div>
     </q-modal>
 
     <q-modal minimized v-model="modals.change_password.visible" @hide="clearChangePassword()">
-        <div class="modal-header">Change password</div>
+        <div class="modal-header">{{ $t("menuItems.changePassword") }}</div>
         <div class="q-ma-lg">
             <q-field>
-                <q-input v-model="modals.change_password.old_password" type="password" float-label="Old Password" :dark="theme=='dark'" />
+                <q-input v-model="modals.change_password.old_password" type="password" :float-label="$t('fieldLabels.oldPassword')" :dark="theme=='dark'" />
             </q-field>
 
             <q-field>
-                <q-input v-model="modals.change_password.new_password" type="password" float-label="New Password" :dark="theme=='dark'" />
+                <q-input v-model="modals.change_password.new_password" type="password" :float-label="$t('fieldLabels.newPassword')" :dark="theme=='dark'" />
             </q-field>
 
             <q-field>
-                <q-input v-model="modals.change_password.new_password_confirm" type="password" float-label="Confirm New Password" :dark="theme=='dark'" />
+                <q-input v-model="modals.change_password.new_password_confirm" type="password" :float-label="$t('fieldLabels.confirmNewPassword')" :dark="theme=='dark'" />
             </q-field>
 
             <div class="q-mt-xl text-right">
                 <q-btn
                     flat class="q-mr-sm"
                     @click="hideModal('change_password')"
-                    label="Close"
+                    :label="$t('buttons.close')"
                     />
                 <q-btn
                     color="primary"
                     @click="doChangePassword()"
-                    label="Change"
+                    :label="$t('buttons.change')"
+                    />
+            </div>
+        </div>
+    </q-modal>
+
+
+    <q-modal minimized v-model="modals.export_transactions.visible">
+        <div class="modal-header">{{ $t("menuItems.exportTransactions") }}</div>
+            <div class="q-ma-lg">
+                <q-field style="width:450px">
+                    <div class="row gutter-sm">
+                        <div class="col-9">
+                            <q-input v-model="modals.export_transactions.export_path" stack-label="transactions export directory" disable />
+                            <input type="file" webkitdirectory directory id="transactionsExportPath" v-on:change="setTransactionsExportPath" ref="transactionsExportSelect" hidden />
+                        </div>
+                        <div class="col-3">
+                            <q-btn class="float-right" v-on:click="selectTransactionsExportPath">{{ $t("buttons.browse") }}</q-btn>
+                        </div>
+                    </div>
+                </q-field>
+            </div>
+        <div class="modal-header">Export Options</div>
+            <div class="q-ma-lg">
+                <q-field style="width:450px">
+                    <div class="row gutter-sm">
+                    <div class="col-9">
+                    <q-checkbox v-model="modals.export_transactions.header" label="Include header"/>
+                </div>
+            </div>
+            </q-field>
+            <div class="row q-mb-md">
+                <div class="q-mr-xl">
+                    <q-checkbox v-model="modals.export_transactions.options.in" :label="$t('strings.transactions.types.incoming')" />
+                </div>
+                <div>
+                    <q-checkbox v-model="modals.export_transactions.options.out" :label="$t('strings.transactions.types.outgoing')" />
+                </div>
+                <div class="q-mr-xl">
+                    <q-checkbox v-model="modals.export_transactions.options.pending" :label="$t('strings.transactions.types.pending')" />
+                </div>
+                <div>
+                    <q-checkbox v-model="modals.export_transactions.options.failed" :label="$t('strings.transactions.types.failed')" />
+                </div>
+                <div>
+                    <q-checkbox v-model="modals.export_transactions.options.pool" label="Pool" />
+                </div>
+            </div>
+            <div class="q-mt-xl text-right">
+                <q-btn
+                    flat class="q-mr-sm"
+                    @click="hideModal('export_transactions')"
+                    :label="$t('buttons.close')"
+                    />
+                <q-btn
+                    color="primary"
+                    @click="doExportTransactions()"
+                    :label="$t('buttons.export')"
                     />
             </div>
         </div>
@@ -262,7 +331,8 @@
 const { clipboard } = require("electron")
 import { mapState } from "vuex"
 import AddressHeader from "components/address_header"
-import FormatRyo from "components/format_ryo"
+import FormatArqma from "components/format_arqma"
+import FormatBitcoin from "components/format_bitcoin"
 import TxList from "components/tx_list"
 export default {
     computed: mapState({
@@ -272,7 +342,8 @@ export default {
         data_dir: state => state.gateway.app.config.app.data_dir,
         is_ready (state) {
             return this.$store.getters["gateway/isReady"]
-        }
+        },
+        tx_list: state => state.gateway.wallet.transactions.tx_list
     }),
     data () {
         return {
@@ -296,6 +367,12 @@ export default {
                     new_password: "",
                     new_password_confirm: "",
                 },
+                export_transactions: {
+                    export_path: "",
+                    visible: false,
+                    options: { in: true, out: true, pending: false, failed: false, pool: false },
+                    header: true
+                },
             }
         }
     },
@@ -303,6 +380,7 @@ export default {
         const path = require("path")
         this.modals.key_image.export_path = path.join(this.data_dir, "gui")
         this.modals.key_image.import_path = path.join(this.data_dir, "gui", "key_image_export")
+        this.modals.export_transactions.export_path = path.join(this.data_dir, "exports")
     },
     watch: {
         secret: {
@@ -385,18 +463,18 @@ export default {
         getPrivateKeys () {
             if(!this.is_ready) return
             this.$q.dialog({
-                title: "Show private keys",
-                message: "Enter wallet password to continue.",
+                title: this.$t('dialog.showPrivateKeys.title'),
+                message: this.$t('dialog.showPrivateKeys.message'),
                 prompt: {
                     model: "",
                     type: "password"
                 },
                 ok: {
-                    label: "SHOW"
+                    label: this.$t('dialog.showPrivateKeys.ok')
                 },
                 cancel: {
                     flat: true,
-                    label: "CANCEL",
+                    label: this.$t('dialog.buttons.cancel'),
                     color: this.theme=="dark"?"white":"dark"
                 }
             }).then(password => {
@@ -508,15 +586,15 @@ export default {
         },
         deleteWallet () {
             this.$q.dialog({
-                title: "Delete wallet",
-                message: "Are you absolutely sure you want to delete your wallet?\nMake sure you have your private keys backed up.\nTHIS PROCESS IS NOT REVERSIBLE!",
+                title: this.$t('dialog.deleteWallet.title'),
+                message: this.$t('dialog.deleteWallet.message'),
                 ok: {
-                    label: "DELETE",
+                    label: this.$t('dialog.deleteWallet.ok'),
                     color: "red"
                 },
                 cancel: {
                     flat: true,
-                    label: "CANCEL",
+                    label: this.$t('dialog.buttons.cancel'),
                     color: this.theme=="dark"?"white":"dark"
                 }
             }).then(() => {
@@ -542,10 +620,24 @@ export default {
                 })
             }).catch(() => {
             })
+        },
+        doExportTransactions () {
+            this.hideModal("export_transactions")
+            this.modals.export_transactions.headers = `${this.$i18n.t("headers.address")},${this.$i18n.t("headers.amount")},${this.$i18n.t("headers.confirmations")},${this.$i18n.t("headers.double_spend_seen")},${this.$i18n.t("headers.fee")},${this.$i18n.t("headers.height")},${this.$i18n.t("headers.note")},${this.$i18n.t("headers.paymentid")},${this.$i18n.t("headers.suggestedConfirmationsThreshold")},${this.$i18n.t("headers.timestamp")},${this.$i18n.t("headers.txid")},${this.$i18n.t("headers.type")},${this.$i18n.t("headers.unlockTime")}\n`
+
+            this.$gateway.send("wallet", "export_transactions", this.modals.export_transactions)
+        },
+        selectTransactionsExportPath () {
+            this.$refs.transactionsExportSelect.click()
+        },
+        setTransactionsExportPath (file) {
+            if (file.target.files)
+                this.modals.export_transactions.export_path = file.target.files[0].path
         }
     },
     components: {
-        FormatRyo,
+        FormatArqma,
+        FormatBitcoin,
         AddressHeader,
         TxList
     },

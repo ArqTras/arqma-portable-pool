@@ -163,6 +163,14 @@ export class WalletRPC {
 
         switch (data.method) {
 
+            case "has_password":
+                this.hasPassword()
+                break
+
+            case "validate_address":
+                this.validateAddress(params.address)
+                break
+
             case "list_wallets":
                 this.listWallets()
                 break
@@ -195,6 +203,14 @@ export class WalletRPC {
 
             case "transfer":
                 this.transfer(params.password, params.amount, params.address, params.payment_id, params.ringsize, params.priority, params.address_book)
+                break
+
+          case "prove_transaction":
+                this.proveTransaction(params.txid, params.address, params.message)
+                break
+
+          case "check_transaction":
+                this.checkTransactionProof(params.signature, params.txid, params.address, params.message)
                 break
 
             case "add_address_book":
@@ -266,7 +282,47 @@ export class WalletRPC {
         })
 
     }
+    hasPassword () {
+            if (this.wallet_state.password_hash === null) {
+                this.sendGateway("set_has_password", false)
+                return
+            }
 
+            crypto.pbkdf2("", this.auth[2], 1000, 64, "sha512", (err, password_hash) => {
+                if (err) {
+                    this.sendGateway("set_has_password", false)
+                    return
+                }
+
+                // If the pass hash doesn't match empty string then we don't have a password
+                this.sendGateway("set_has_password", this.wallet_state.password_hash !== password_hash.toString("hex"))
+            })
+        }
+
+        validateAddress (address) {
+            this.sendRPC("validate_address", {
+                address
+            }).then((data) => {
+                if (data.hasOwnProperty("error")) {
+                    this.sendGateway("set_valid_address", {
+                        address,
+                        valid: false
+                    })
+                    return
+                }
+
+                const { valid, nettype } = data.result
+
+                const netMatches = this.net_type === nettype
+                const isValid = valid && netMatches
+
+                this.sendGateway("set_valid_address", {
+                    address,
+                    valid: isValid,
+                    nettype
+                })
+            })
+        }
 
     restoreWallet(filename, password, seed, refresh_type, refresh_start_timestamp_or_height) {
 
@@ -636,102 +692,151 @@ export class WalletRPC {
 
     }
 
-    transfer (password, amount, address, payment_id, ringsize, priority, address_book={}) {
-
+    transfer (password, amount, address, payment_id, priority, note, address_book = {}) {
         crypto.pbkdf2(password, this.auth[2], 1000, 64, "sha512", (err, password_hash) => {
             if (err) {
                 this.sendGateway("set_tx_status", {
                     code: -1,
-                    message: "Internal error",
+                    i18n: "notification.errors.internalError",
                     sending: false
                 })
                 return
             }
-            if(this.wallet_state.password_hash !== password_hash.toString("hex")) {
+            if (!this.isValidPasswordHash(password_hash)) {
                 this.sendGateway("set_tx_status", {
                     code: -1,
-                    message: "Invalid password",
+                    i18n: "notification.errors.invalidPassword",
                     sending: false
                 })
                 return
             }
 
-            amount = parseFloat(amount).toFixed(9)*1e9
+            amount = (parseFloat(amount) * 1e9).toFixed(0)
 
             let sweep_all = amount == this.wallet_state.unlocked_balance
 
-            if(sweep_all) {
-
-                let params = {
-                    "address": address,
-                    "account_index": 0,
-                    "priority": priority,
-                    "mixin": ringsize-1
-                }
-
-                if(payment_id) {
-                    params.payment_id = payment_id
-                }
-
-                this.sendRPC("sweep_all", params).then((data) => {
-                    if(data.hasOwnProperty("error")) {
-                        let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1);
-                        this.sendGateway("set_tx_status", {
-                            code: -1,
-                            message: error,
-                            sending: false
-                        })
-                        return
-                    }
-
-                    this.sendGateway("set_tx_status", {
-                        code: 0,
-                        message: "Transaction successfully sent",
-                        sending: false
-                    })
-
-                })
-
-            } else {
-
-                let params = {
-                    "destinations": [{"amount" : amount, "address": address}],
-                    "priority": priority,
-                    "mixin": ringsize-1
-                }
-
-                if(payment_id) {
-                    params.payment_id = payment_id
-                }
-
-                this.sendRPC("transfer_split", params).then((data) => {
-                    if(data.hasOwnProperty("error")) {
-                        let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1);
-                        this.sendGateway("set_tx_status", {
-                            code: -1,
-                            message: error,
-                            sending: false
-                        })
-                        return
-                    }
-
-                    this.sendGateway("set_tx_status", {
-                        code: 0,
-                        message: "Transaction successfully sent",
-                        sending: false
-                    })
-
-                })
-
+            const rpc_endpoint = sweep_all ? "sweep_all" : "transfer_split"
+            const params = sweep_all ? {
+                "address": address,
+                "account_index": 0,
+                "priority": priority,
+                "mixin": 10 // Always force a ring size of 10 (ringsize = mixin + 1)
+            } : {
+                "destinations": [{ "amount": amount, "address": address }],
+                "priority": priority,
+                "mixin": 10
             }
 
-            if(address_book.hasOwnProperty("save") && address_book.save)
-                this.addAddressBook(address, payment_id, address_book.description, address_book.name)
+            if (payment_id) {
+                params.payment_id = payment_id
+            }
 
+            this.sendRPC(rpc_endpoint, params).then((data) => {
+                if (data.hasOwnProperty("error")) {
+                    let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1)
+                    this.sendGateway("set_tx_status", {
+                        code: -1,
+                        message: error,
+                        sending: false
+                    })
+                    return
+                }
+
+                this.sendGateway("set_tx_status", {
+                    code: 0,
+                    i18n: "notification.positive.sendSuccess",
+                    sending: false
+                })
+
+                if (data.result) {
+                    const hash_list = data.result.tx_hash_list || []
+                    // Save notes
+                    if (note && note !== "") {
+                        hash_list.forEach(txid => this.saveTxNotes(txid, note))
+                    }
+                }
+            })
+
+            if (address_book.hasOwnProperty("save") && address_book.save) { this.addAddressBook(address, payment_id, address_book.description, address_book.name) }
         })
-
     }
 
+    proveTransaction (txid, address, message) {
+        const _address = address.trim() === "" ? null : address
+        const _message = message.trim() === "" ? null : message
+
+        const rpc_endpoint = _address ? "get_tx_proof" : "get_spend_proof"
+        const params = {
+            txid,
+            address: _address,
+            message: _message
+        }
+
+        this.sendGateway("set_prove_transaction_status", {
+            code: 1,
+            message: ""
+        })
+
+        this.sendRPC(rpc_endpoint, params).then((data) => {
+            if (data.hasOwnProperty("error")) {
+                let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1)
+                this.sendGateway("set_prove_transaction_status", {
+                    code: -1,
+                    message: error,
+                    state: {}
+                })
+                return
+            }
+
+            this.sendGateway("set_prove_transaction_status", {
+                code: 0,
+                message: "",
+                state: {
+                    txid,
+                    ...(data.result || {})
+                }
+            })
+        })
+    }
+
+    checkTransactionProof (signature, txid, address, message) {
+        const _address = address.trim() === "" ? null : address
+        const _message = message.trim() === "" ? null : message
+
+        const rpc_endpoint = _address ? "check_tx_proof" : "check_spend_proof"
+        const params = {
+            txid,
+            signature,
+            address: _address,
+            message: _message
+        }
+
+        this.sendGateway("set_check_transaction_status", {
+            code: 1,
+            message: ""
+        })
+
+        this.sendRPC(rpc_endpoint, params).then((data) => {
+            if (data.hasOwnProperty("error")) {
+                let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1)
+                this.sendGateway("set_check_transaction_status", {
+                    code: -1,
+                    message: error,
+                    state: {}
+                })
+                return
+            }
+
+            this.sendGateway("set_check_transaction_status", {
+                code: 0,
+                message: "",
+                state: {
+                    txid,
+                    ...(data.result || {})
+                }
+            })
+        })
+    }
     rescanBlockchain () {
         this.sendRPC("rescan_blockchain")
     }
@@ -853,7 +958,7 @@ export class WalletRPC {
                 wallet.address_list.unused = wallet.address_list.unused.slice(0,10)
 
                 if(wallet.address_list.unused.length < num_unused_addresses &&
-                   !wallet.address_list.primary[0].address.startsWith("aR") &&
+                   !wallet.address_list.primary[0].address.startsWith("ar") &&
                    !wallet.address_list.primary[0].address.startsWith("aRi")) {
                     for(let n = wallet.address_list.unused.length; n < num_unused_addresses; n++) {
                         this.sendRPC("create_address", {account_index: 0}).then((data) => {

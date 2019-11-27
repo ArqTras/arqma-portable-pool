@@ -125,7 +125,7 @@ export class Daemon {
                 this.testnet = true
                 args.push("--testnet")
                 args.push("--log-file", path.join(options.app.data_dir, "testnet", "logs", "arqmad.log"))
-                args.push("--add-peer", "45.77.68.151:13310")
+                //args.push("--add-peer", "45.77.68.151:13310")
             } else {
                 args.push("--log-file", path.join(options.app.data_dir, "logs", "arqmad.log"))
             }

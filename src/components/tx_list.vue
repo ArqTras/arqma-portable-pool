@@ -2,7 +2,7 @@
 <div>
 
     <template v-if="tx_list_paged.length === 0">
-        <p class="q-pa-md q-mb-none">No transactions found</p>
+        <p class="q-pa-md q-mb-none">{{ $t("strings.noTransactionsFound") }}</p>
     </template>
 
     <template v-else>
@@ -16,10 +16,11 @@
                     <q-item-main>
                         <q-item-tile class="monospace ellipsis" label>{{ tx.txid }}</q-item-tile>
                         <q-item-tile sublabel>{{ formatHeight(tx) }}</q-item-tile>
+
                     </q-item-main>
                     <q-item-side>
                         <q-item-tile label>
-                            <FormatRyo :amount="tx.amount" />
+                            <FormatRyo :amount="tx.amount" raw-value />
                         </q-item-tile>
                         <q-item-tile sublabel>
                             <timeago :datetime="tx.timestamp*1000" :auto-update="60">

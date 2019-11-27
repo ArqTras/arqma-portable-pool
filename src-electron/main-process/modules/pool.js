@@ -437,7 +437,6 @@ export class Pool {
                     fixed
                 }
 
-
                 const newMiner = new Miner(this, connection_id, workerName, varDiff, ip, socket)
 
                 this.connections[connection_id] = newMiner

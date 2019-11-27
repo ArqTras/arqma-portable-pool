@@ -137,7 +137,7 @@ app.on("ready", () => {
         tray = new Tray(path.join(__statics, "icon_32x32.png"))
         const contextMenu = Menu.buildFromTemplate([
             {
-                label: "Show Ryo Wallet",
+                label: "Show Arqma Wallet",
                 click: function() {
                     if(mainWindow.isMinimized())
                         mainWindow.minimize()
@@ -147,7 +147,7 @@ app.on("ready", () => {
                 }
             },
             {
-                label: "Exit Ryo Wallet",
+                label: "Exit Arqma Wallet",
                 click: function() {
                     if(mainWindow.isMinimized())
                         mainWindow.minimize()

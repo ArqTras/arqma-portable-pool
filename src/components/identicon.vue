@@ -77,30 +77,23 @@ export default {
 
             if(!(/^[0-9A-Za-z]+$/.test(input))) return false
 
-            switch (input.substring(0,4)) {
-                case "Sumo":
-                case "RYoL":
-                case "Suto":
-                case "RYoT":
+            switch (input.substring(0,2)) {
+                case "ar":
+                case "aRi":
                     return input.length === 99
 
                 case "Subo":
                 case "Suso":
                     return input.length == 98
 
-                case "RYoS":
-                case "RYoU":
+                case "aRS":
                     return input.length == 99
 
-                case "Sumi":
-                case "RYoN":
-                case "Suti":
-                case "RYoE":
+                case "ar":
+                case "aRi":
+                case "aRS":
                     return input.length === 110
 
-                case "RYoK":
-                case "RYoH":
-                    return input.length === 55
 
                 default:
                     return false

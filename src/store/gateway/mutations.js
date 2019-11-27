@@ -18,3 +18,12 @@ export const set_wallet_list = (state, data) => {
 export const set_tx_status = (state, data) => {
     state.tx_status = data
 }
+export const set_prove_transaction_status = (state, data) => {
+    state.prove_transaction_status = data
+}
+export const set_check_transaction_status = (state, data) => {
+    state.check_transaction_status = data
+}
+export const set_market_data = (state, data) => {
+    state.market = objectAssignDeep.noMutate(state.market, data)
+}

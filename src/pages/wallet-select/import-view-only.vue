@@ -50,7 +50,7 @@
                                  />
                     </template>
                 </div>
-                <div class="col-auto self-end">
+                <div class="col-auto">
                     <template v-if="wallet.refresh_type=='date'">
                         <q-btn @click="wallet.refresh_type='height'" class="float-right" :text-color="theme=='dark'?'white':'dark'" flat>
                             <div style="width: 80px;" class="text-center">
@@ -84,9 +84,6 @@
         </q-field>
 
     </div>
-
-    <WalletLoading ref="loading" />
-
 </q-page>
 </template>
 
@@ -94,7 +91,6 @@
 import { required, numeric } from "vuelidate/lib/validators"
 import { privkey, address } from "src/validators/common"
 import { mapState } from "vuex"
-import WalletLoading from "components/wallet_loading"
 export default {
     data () {
         return {
@@ -122,11 +118,11 @@ export default {
                     case 1:
                         break;
                     case 0:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$router.replace({ path: "/wallet-select/created" });
                         break;
                     default:
-                        this.$refs.loading.hide()
+                        this.$q.loading.hide()
                         this.$q.notify({
                             type: "negative",
                             timeout: 1000,
@@ -141,7 +137,18 @@ export default {
     validations: {
         wallet: {
             name: { required },
-            address: { required, address },
+            address: {
+                required,
+                isAddress(value) {
+                    if (value === '') return true
+
+                    return new Promise(resolve => {
+                        address(value, this.$gateway)
+                            .then(() => resolve(true))
+                            .catch(e => resolve(false))
+                    });
+                }
+            },
             viewkey: { required, privkey },
             refresh_start_height: { numeric }
         }
@@ -154,7 +161,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Enter a wallet name"
+                    message: this.$t("notification.errors.enterWalletName")
                 })
                 return
             }
@@ -162,7 +169,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Invalid public address"
+                    message: this.$t("notification.errors.invalidPublicAddress")
                 })
                 return
             }
@@ -171,7 +178,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Invalid private viewkey"
+                    message: this.$t("notification.errors.invalidPrivateViewKey")
                 })
                 return
             }
@@ -180,7 +187,7 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Invalid restore height"
+                    message: this.$t("notification.errors.invalidRestoreHeight")
                 })
                 return
             }
@@ -188,21 +195,20 @@ export default {
                 this.$q.notify({
                     type: "negative",
                     timeout: 1000,
-                    message: "Passwords do not match"
+                    message: this.$t("notification.errors.passwordNoMatch")
                 })
                 return
             }
 
-            this.$q.loading.show()
+            this.$q.loading.show({
+                delay: 0
+            })
 
             this.$gateway.send("wallet", "restore_view_wallet", this.wallet);
         },
         cancel() {
             this.$router.replace({ path: "/wallet-select" });
         }
-    },
-    components: {
-        WalletLoading
     }
 }
 </script>
