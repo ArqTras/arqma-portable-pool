@@ -26,18 +26,6 @@
 
         <div v-if="page=='preferences'">
             <div class="q-pa-md">
-                <h6 class="q-mb-md q-mt-none" style="font-weight: 300">Appearance:</h6>
-
-                <q-btn-toggle
-                    v-model="theme"
-                    toggle-color="primary"
-                    size="md"
-                    :options="[
-                              {label: 'Light theme', value: 'light', icon: 'brightness_5'},
-                              {label: 'Dark theme', value: 'dark', icon: 'brightness_2'},
-                              ]"
-                    />
-
 
                 <h6 class="q-mb-md" style="font-weight: 300">Preferences:</h6>
                 <div>
