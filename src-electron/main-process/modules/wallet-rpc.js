@@ -163,6 +163,10 @@ export class WalletRPC {
 
         switch (data.method) {
 
+            case "validate_address":
+                      this.validateAddress(params.address)
+                      break
+
             case "has_password":
                 this.hasPassword()
                 break
@@ -256,6 +260,30 @@ export class WalletRPC {
         }
     }
 
+    validateAddress (address) {
+            this.sendRPC("validate_address", {
+                address
+            }).then((data) => {
+                if (data.hasOwnProperty("error")) {
+                    this.sendGateway("set_valid_address", {
+                        address,
+                        valid: false
+                    })
+                    return
+                }
+
+                const { valid, nettype } = data.result
+
+                const netMatches = this.net_type === nettype
+                const isValid = valid && netMatches
+
+                this.sendGateway("set_valid_address", {
+                    address,
+                    valid: isValid,
+                    nettype
+                })
+            })
+        }
 
     createWallet(filename, password, language, type) {
 

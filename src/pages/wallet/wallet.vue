@@ -4,6 +4,7 @@
     <AddressHeader :address="info.address" :title="info.name" />
 
     <div class="row">
+
         <div class="infoBoxBalance">
             <div class="infoBox">
                 <div class="infoBoxContent">
@@ -12,6 +13,9 @@
                 </div>
             </div>
         </div>
+
+
+
         <div class="infoBoxBalance">
             <div class="infoBox">
                 <div class="infoBoxContent">
@@ -20,6 +24,7 @@
                 </div>
             </div>
         </div>
+
         <div>
             <div class="infoBox">
                 <div class="infoBoxContent">
