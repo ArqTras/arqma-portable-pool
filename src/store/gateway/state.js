@@ -5,7 +5,7 @@ export default {
         },
         config: {
             appearance: {
-                theme: "light"
+                theme: "dark"
             },
             preference: {
                 notify_no_payment_id: true,
