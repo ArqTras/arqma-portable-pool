@@ -25,9 +25,22 @@ export const address = (input) => {
                     case "aRi":
                         resolve(input.length === 109)
                         break
+                    case "ar2":
+                        resolve(input.length === 97)
+                        break
                     case "ar3":
                         resolve(input.length === 97)
                         break
+                    case "ar4":
+                        resolve(input.length === 97)
+                        break
+                    case "ar5":
+                        resolve(input.length === 97)
+                        break
+                    case "aRS":
+                        resolve(input.length === 98)
+                        break
+
                     default:
                         resolve(false)
                 }

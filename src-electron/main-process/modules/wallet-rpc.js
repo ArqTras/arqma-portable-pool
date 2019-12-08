@@ -171,10 +171,6 @@ export class WalletRPC {
                 this.hasPassword()
                 break
 
-            case "validate_address":
-                this.validateAddress(params.address)
-                break
-
             case "list_wallets":
                 this.listWallets()
                 break
@@ -353,55 +349,51 @@ export class WalletRPC {
         })
     }
 
-    restoreWallet(filename, password, seed, refresh_type, refresh_start_timestamp_or_height) {
+    restoreWallet (filename, password, seed, refresh_type, refresh_start_timestamp_or_height) {
+          if (refresh_type == "date") {
+              // Convert timestamp to 00:00 and move back a day
+              // Core code also moved back some amount of blocks
+              let timestamp = refresh_start_timestamp_or_height
+              timestamp = timestamp - (timestamp % 86400000) - 86400000
 
-        if(refresh_type == "date") {
-            // Convert timestamp to 00:00 and move back a day
-            // Core code also moved back some amount of blocks
-            let timestamp = refresh_start_timestamp_or_height
-            timestamp = timestamp - (timestamp % 86400000) - 86400000
+              this.sendGateway("reset_wallet_error")
+              this.backend.daemon.timestampToHeight(timestamp).then((height) => {
+                  if (height === false) {
+                      this.sendGateway("set_wallet_error", { status: { code: -1, i18n: "notification.errors.invalidRestoreDate" } })
+                  } else {
+                      this.restoreWallet(filename, password, seed, "height", height)
+                  }
+              })
+              return
+          }
 
-            this.backend.daemon.timestampToHeight(timestamp).then((height) => {
-                if(height === false)
-                    this.sendGateway("set_wallet_error", {status:{code: -1, message: "Invalid restore date"}})
-                else
-                    this.restoreWallet(filename, password, seed, "height", height)
-            })
-            return
-        }
-        this.sendRPC("restore_deterministic_wallet", {
-            filename,
-            password,
-            seed,
-            restore_height
-        }).then((data) => {
-            if(data.hasOwnProperty("error")) {
-                this.sendGateway("set_wallet_error", {status:data.error})
-                return
-            }
+          let restore_height = refresh_start_timestamp_or_height
 
-            // restore wallet rpc does not automatically open the wallet after restoring
-            // ^ above behavior is now fixed, no need to open wallet manually
-            //this.sendRPC("open_wallet", {
-            //filename,
-            //password
-            //}).then((data) => {
-            //if(data.hasOwnProperty("error")) {
-            //this.sendGateway("set_wallet_error", {status:data.error})
-            //return
-            //}
+          if (!Number.isInteger(restore_height)) {
+              restore_height = 0
+          }
+          seed = seed.trim().replace(/\s{2,}/g, " ")
 
-            // store hash of the password so we can check against it later when requesting private keys, or for sending txs
-            this.wallet_state.password_hash = crypto.pbkdf2Sync(password, this.auth[2], 1000, 64, "sha512").toString("hex")
-            this.wallet_state.name = filename
-            this.wallet_state.open = true
+          this.sendGateway("reset_wallet_error")
+          this.sendRPC("restore_deterministic_wallet", {
+              filename,
+              password,
+              seed,
+              restore_height
+          }).then((data) => {
+              if (data.hasOwnProperty("error")) {
+                  this.sendGateway("set_wallet_error", { status: data.error })
+                  return
+              }
 
-            this.finalizeNewWallet(filename)
+              // store hash of the password so we can check against it later when requesting private keys, or for sending txs
+              this.wallet_state.password_hash = crypto.pbkdf2Sync(password, this.auth[2], 1000, 64, "sha512").toString("hex")
+              this.wallet_state.name = filename
+              this.wallet_state.open = true
 
-            //});
-
-        });
-    }
+              this.finalizeNewWallet(filename)
+          })
+      }
 
     restoreViewWallet(filename, password, address, viewkey, refresh_type, refresh_start_timestamp_or_height) {
 
