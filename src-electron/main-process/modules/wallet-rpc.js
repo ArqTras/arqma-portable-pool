@@ -329,7 +329,6 @@ export class WalletRPC {
         }
 
     validateAddress (address) {
-        console.log(address, '<<<<<<<<<<<<<<<<<<<<<<<<')
         this.sendRPC("validate_address", {
             address
         }).then((data) => {
@@ -700,8 +699,10 @@ export class WalletRPC {
     }
 
     transfer (password, amount, address, payment_id, priority, note, address_book = {}) {
+        console.log(password, amount, address, payment_id, priority, note, address_book)
         crypto.pbkdf2(password, this.auth[2], 1000, 64, "sha512", (err, password_hash) => {
             if (err) {
+                console.log("error")
                 this.sendGateway("set_tx_status", {
                     code: -1,
                     i18n: "notification.errors.internalError",
@@ -709,7 +710,9 @@ export class WalletRPC {
                 })
                 return
             }
-            if (!this.isValidPasswordHash(password_hash)) {
+            //if (!this.isValidPasswordHash(password_hash)) {
+            if (this.wallet_state.password_hash !== password_hash.toString("hex")) {
+                console.log('invalidHash')
                 this.sendGateway("set_tx_status", {
                     code: -1,
                     i18n: "notification.errors.invalidPassword",
@@ -740,6 +743,7 @@ export class WalletRPC {
 
             this.sendRPC(rpc_endpoint, params).then((data) => {
                 if (data.hasOwnProperty("error")) {
+                    console.log('send error')
                     let error = data.error.message.charAt(0).toUpperCase() + data.error.message.slice(1)
                     this.sendGateway("set_tx_status", {
                         code: -1,
@@ -748,7 +752,7 @@ export class WalletRPC {
                     })
                     return
                 }
-
+console.log('success')
                 this.sendGateway("set_tx_status", {
                     code: 0,
                     i18n: "notification.positive.sendSuccess",
