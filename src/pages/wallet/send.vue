@@ -177,15 +177,18 @@ export default {
                 decimal,
                 greater_than_zero
             },
-            address: {
-            required,
-            isAddress(value) {
-                    if (value === '') return true
-
+            address: { required, doit(value) {
                     return new Promise(resolve => {
+                        if (value === '') resolve(true)
                         address(value, this.$gateway)
-                            .then(() => resolve(true))
-                            .catch(e => resolve(false))
+                            .then(() => {
+                                            console.log('yes<<<<<<<<<<<<<<<<<<<<<')
+                                            resolve(true)
+                                        })
+                            .catch(e => {
+                                            console.log('nooooo<<<<<<<<<<<<<<<<<<')
+                                            resolve(false)
+                                        })
                     });
                 }
             },

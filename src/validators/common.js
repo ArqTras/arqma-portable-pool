@@ -17,27 +17,32 @@ export const service_node_key = (input) => {
 }
 
 export const address = (input, gateway) => {
-    // if (/^[0-9A-Za-z]+$/.test(input)) return false
-
     // Validate the address
     return new Promise((resolve, reject) => {
-        if (/^[0-9A-Za-z]+$/.test(input)) {
-            gateway.once("validate_address", (data) => {
-                if (data.address && data.address !== input) {
-                    reject()
-                } else {
-                    if (data.valid) {
-                        resolve()
+        try {
+            if (/^[0-9A-Za-z]+$/.test(input)) {
+                return gateway.once("validate_address", (data) => {
+                    console.log(data, 'validated address <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+                    if (data.address && data.address !== input) {
+                       return reject(false)
                     } else {
-                        reject()
+                        if (data.valid) {
+                            return resolve(true)
+                        } else {
+                            return reject(false)
+                        }
                     }
-                }
-            })
-            gateway.send("wallet", "validate_address", {
-                address: input
-            })
-        } else {
-            reject()
+                })
+                return gateway.send("wallet", "validate_address", {
+                    address: input
+                })
+            } else {
+               console.log('sheeit <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+               reject(false)
+            }
+        } catch(e) {
+            console.log('sheeit <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e, '<<<<<>>>>>>>', gateway)
+            reject(false)
         }
     })
 }

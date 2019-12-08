@@ -260,30 +260,31 @@ export class WalletRPC {
         }
     }
 
-    validateAddress (address) {
-            this.sendRPC("validate_address", {
-                address
-            }).then((data) => {
-                if (data.hasOwnProperty("error")) {
-                    this.sendGateway("set_valid_address", {
-                        address,
-                        valid: false
-                    })
-                    return
-                }
+    // validateAddress (address) {
+    //     console.log(address, '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+    //         this.sendRPC("validate_address", {
+    //             address
+    //         }).then((data) => {
+    //             if (data.hasOwnProperty("error")) {
+    //                 this.sendGateway("set_valid_address", {
+    //                     address,
+    //                     valid: false
+    //                 })
+    //                 return
+    //             }
 
-                const { valid, nettype } = data.result
+    //             const { valid, nettype } = data.result
 
-                const netMatches = this.net_type === nettype
-                const isValid = valid && netMatches
+    //             const netMatches = this.net_type === nettype
+    //             const isValid = valid && netMatches
 
-                this.sendGateway("set_valid_address", {
-                    address,
-                    valid: isValid,
-                    nettype
-                })
-            })
-        }
+    //             this.sendGateway("set_valid_address", {
+    //                 address,
+    //                 valid: isValid,
+    //                 nettype
+    //             })
+    //         })
+    //     }
 
     createWallet(filename, password, language, type) {
 
@@ -327,30 +328,31 @@ export class WalletRPC {
             })
         }
 
-        validateAddress (address) {
-            this.sendRPC("validate_address", {
-                address
-            }).then((data) => {
-                if (data.hasOwnProperty("error")) {
-                    this.sendGateway("set_valid_address", {
-                        address,
-                        valid: false
-                    })
-                    return
-                }
-
-                const { valid, nettype } = data.result
-
-                const netMatches = this.net_type === nettype
-                const isValid = valid && netMatches
-
+    validateAddress (address) {
+        console.log(address, '<<<<<<<<<<<<<<<<<<<<<<<<')
+        this.sendRPC("validate_address", {
+            address
+        }).then((data) => {
+            if (data.hasOwnProperty("error")) {
                 this.sendGateway("set_valid_address", {
                     address,
-                    valid: isValid,
-                    nettype
+                    valid: false
                 })
+                return
+            }
+
+            const { valid, nettype } = data.result
+
+            const netMatches = this.net_type === nettype
+            const isValid = valid && netMatches
+
+            this.sendGateway("set_valid_address", {
+                address,
+                valid: isValid,
+                nettype
             })
-        }
+        })
+    }
 
     restoreWallet(filename, password, seed, refresh_type, refresh_start_timestamp_or_height) {
 
@@ -368,34 +370,11 @@ export class WalletRPC {
             })
             return
         }
-
-        let refresh_start_height = refresh_start_timestamp_or_height
-
-        if(!Number.isInteger(refresh_start_height)) {
-            refresh_start_height = 0
-        }
-        seed = seed.trim().replace(/\s{2,}/g, " ")
-
-        let seed_words = seed.split(" ")
-        switch(seed_words.length) {
-            case 14:
-            case 24:
-            case 25:
-                break
-            case 26:
-                seed_words.pop()
-                seed = seed_words.join(" ")
-                break
-            default:
-                this.sendGateway("set_wallet_error", {status: {code: -1, message:"Invalid seed word length"}})
-                return
-        }
-
-        this.sendRPC("restore_wallet", {
+        this.sendRPC("restore_deterministic_wallet", {
             filename,
             password,
             seed,
-            refresh_start_height
+            restore_height
         }).then((data) => {
             if(data.hasOwnProperty("error")) {
                 this.sendGateway("set_wallet_error", {status:data.error})
@@ -1046,7 +1025,7 @@ export class WalletRPC {
                     return 0
                 })
 
-                //console.log(wallet.transactions)
+
 
                 resolve(wallet)
             })
@@ -1413,6 +1392,7 @@ export class WalletRPC {
         if(timeout) {
             options.timeout = timeout
         }
+        //console.log(options)
 
         return this.queue.add(() => {
             return request(options)
