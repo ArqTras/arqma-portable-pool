@@ -33,7 +33,7 @@ export class Backend {
             fs.mkdirSync(this.config_dir);
         }
 
-	if (!fs.existsSync(path.join(this.config_dir, "gui"))) {
+	      if (!fs.existsSync(path.join(this.config_dir, "gui"))) {
             fs.mkdirSync(path.join(this.config_dir, "gui"));
         }
 
@@ -226,7 +226,6 @@ export class Backend {
                     this.pool.init(this.config_data)
                 })
                 break
-
 
             case "open_explorer":
                 let explorer_url = "https://explorer.arqma.com"

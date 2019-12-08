@@ -112,7 +112,7 @@ export default {
             exchanges: []
         },
         exchange: {
-            protocol: "https://"",
+            protocol: "https://",
             hostname: "api.coingecko.com",
             port: 443,
             coin: "arqma",
