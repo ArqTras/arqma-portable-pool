@@ -62,6 +62,16 @@ export default {
         code: 0,
         message: ""
     },
+    prove_transaction_status: {
+        code: 0,
+        message: "",
+        state: {}
+    },
+    check_transaction_status: {
+        code: 0,
+        message: "",
+        state: {}
+    },
     daemon: {
         info: {
             alt_blocks_count: 0,
@@ -102,7 +112,7 @@ export default {
             exchanges: []
         },
         exchange: {
-            protocol: "https://",
+            protocol: "https://"",
             hostname: "api.coingecko.com",
             port: 443,
             coin: "arqma",

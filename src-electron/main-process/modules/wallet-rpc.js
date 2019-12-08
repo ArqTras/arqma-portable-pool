@@ -618,52 +618,61 @@ export class WalletRPC {
         this.heartbeatAction(true)
     }
 
-    heartbeatAction(extended=false) {
+    heartbeatAction (extended = false) {
         Promise.all([
+            this.sendRPC("get_address", { account_index: 0 }, 5000),
             this.sendRPC("getheight", {}, 5000),
-            this.sendRPC("getbalance", {account_index: 0}, 5000)
+            this.sendRPC("getbalance", { account_index: 0 }, 5000)
         ]).then((data) => {
+            let didError = false
             let wallet = {
                 status: {
                     code: 0,
                     message: "OK"
                 },
-                info:{
+                info: {
                     name: this.wallet_state.name
                 },
                 transactions: {
-                    tx_list: [],
+                    tx_list: []
                 },
                 address_list: {
                     primary: [],
                     used: [],
                     unused: [],
                     address_book: [],
-                    address_book_starred: [],
+                    address_book_starred: []
                 }
-
             }
-            for (let n of data) {
 
-                if(n.hasOwnProperty("error") || !n.hasOwnProperty("result")) {
+            for (let n of data) {
+                if (n.hasOwnProperty("error") || !n.hasOwnProperty("result")) {
+                    // Maybe we also need to look into the other error codes it could give us
+                    // Error -13: No wallet file - This occurs when you call open wallet while another wallet is still syncing
+                    if (extended && n.error && n.error.code === -13) {
+                        didError = true
+                    }
                     continue
                 }
 
-                if(n.method == "getheight") {
+                if (n.method == "getheight") {
                     wallet.info.height = n.result.height
                     this.sendGateway("set_wallet_data", {
                         info: {
                             height: n.result.height
                         }
                     })
-                    this.wallet_info = {
-                        height: n.result.height
-                    }
-
-                } else if(n.method == "getbalance") {
-                    if(this.wallet_state.balance == n.result.balance &&
+                } else if (n.method == "get_address") {
+                    wallet.info.address = n.result.address
+                    this.sendGateway("set_wallet_data", {
+                        info: {
+                            address: n.result.address
+                        }
+                    })
+                } else if (n.method == "getbalance") {
+                    if (this.wallet_state.balance == n.result.balance &&
                        this.wallet_state.unlocked_balance == n.result.unlocked_balance) {
-                        //continue
+                        // continue
                     }
 
                     this.wallet_state.balance = wallet.info.balance = n.result.balance
@@ -677,7 +686,7 @@ export class WalletRPC {
                         this.getTransactions(),
                         this.getAddressList()
                     ]
-                    if(true || extended) {
+                    if (true || extended) {
                         actions.push(this.getAddressBook())
                     }
                     Promise.all(actions).then((data) => {
@@ -690,8 +699,18 @@ export class WalletRPC {
                     })
                 }
             }
-        })
 
+            // Set the wallet state on initial heartbeat
+            if (extended) {
+                if (!didError) {
+                    this.sendGateway("set_wallet_data", wallet)
+                } else {
+                    this.closeWallet().then(() => {
+                        this.sendGateway("set_wallet_error", { status: { code: -1, i18n: "notification.errors.failedWalletOpen" } })
+                    })
+                }
+            }
+        })
     }
 
     transfer (password, amount, address, payment_id, priority, note, address_book = {}) {
