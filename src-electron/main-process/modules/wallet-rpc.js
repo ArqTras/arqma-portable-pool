@@ -252,6 +252,10 @@ export class WalletRPC {
                 this.deleteWallet(params.password)
                 break
 
+            case "export_transactions":
+              this.exportTransactions(params)
+              break
+
             default:
         }
     }
@@ -1423,8 +1427,7 @@ console.log('success')
         return this.sendRPC(`get_${parameter}`, params)
     }
 
-    quit() {
-        this.queue.queue = []
+    quit () {
         return new Promise((resolve, reject) => {
             if (this.walletRPCProcess) {
                 this.closeWallet().then(() => {
@@ -1435,12 +1438,49 @@ console.log('success')
                 setTimeout(() => {
                     this.walletRPCProcess.on("close", code => {
                         this.agent.destroy()
+                        clearTimeout(this.forceKill)
                         resolve()
                     })
-                    this.walletRPCProcess.kill()
+
+                    // Force kill after 20 seconds
+                    this.forceKill = setTimeout(() => {
+                        this.walletRPCProcess.kill("SIGKILL")
+                    }, 20000)
+
+                    // Force kill if the rpc is syncing
+                    const signal = this.isRPCSyncing ? "SIGKILL" : "SIGTERM"
+                    this.walletRPCProcess.kill(signal)
                 }, 2500)
             } else {
                 resolve()
+            }
+        })
+    }
+
+    exportTransactions (params) {
+        return new Promise((resolve, reject) => {
+            if (params.hasOwnProperty("export_path")) {
+                if (!fs.existsSync(params.export_path))
+                    fs.mkdirpSync(params.export_path)
+                this.getTransactions(params.options)
+                    .then(data => {
+                        let filename = `transactions-${new Date().toISOString()}.csv`
+                        filename = filename.replace(/:\s*/g, ".")
+                        let csv = fs.createWriteStream(path.join(params.export_path, filename), { encoding: "utf8", flags: "wx" })
+                        if (params.header)
+                            csv.write(params.headers)
+                        for (const [key, transaction] of Object.entries(data.transactions.tx_list)) {
+                            csv.write(`${transaction.address},${transaction.amount / 1e9},${transaction.confirmations},${transaction.double_spend_seen},${transaction.fee / 1e9},${transaction.height},${transaction.note},${transaction.payment_id},${transaction.suggested_confirmations_threshold},${new Date(transaction.timestamp * 1000).toISOString()},${transaction.txid},${transaction.type},${transaction.unlock_time}\n`)
+                        }
+                        csv.end()
+                        resolve()
+                    })
+                    .catch(error => {
+                        reject(error)
+                    })
+            } else {
+                var reason = new Error("No export_path provided!")
+                reject(reason)
             }
         })
     }
