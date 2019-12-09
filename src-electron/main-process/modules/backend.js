@@ -7,6 +7,7 @@ import { ipcMain, dialog } from "electron";
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
+const objectAssignDeep = require("object-assign-deep");
 
 export class Backend {
     constructor(mainWindow) {
@@ -39,31 +40,67 @@ export class Backend {
             fs.mkdirSync(path.join(this.config_dir, "gui"));
         }
 
-        this.config_file = path.join(this.config_dir, "gui", "config.json");
+        this.config_file = path.join(this.config_dir, "gui", "config.json")
 
-        this.config_data = {
+                const daemon = {
+                    type: "remote",
+                    p2p_bind_ip: "0.0.0.0",
+                    p2p_bind_port: 19993,
+                    rpc_bind_ip: "127.0.0.1",
+                    rpc_bind_port: 19994,
+                    zmq_rpc_bind_ip: "127.0.0.1",
+                    zmq_rpc_bind_port: 19995,
+                    out_peers: -1,
+                    in_peers: -1,
+                    limit_rate_up: -1,
+                    limit_rate_down: -1,
+                    log_level: 0
+                }
 
-            app: {
-                data_dir: this.config_dir,
-                ws_bind_port: 12213,
-                testnet: false,
-                wallet_data_dir: this.wallet_dir,
-                net_type: "mainnet",
-                wallet_dir: this.wallet_dir
-            },
+                const daemons = {
+                    mainnet: {
+                        ...daemon,
+                        remote_host: "node.supportarqma.com",
+                        remote_port: 19994
+                    },
+                    stagenet: {
+                        ...daemon,
+                        type: "local",
+                        p2p_bind_port: 39993,
+                        rpc_bind_port: 39994,
+                        zmq_rpc_bind_port: 39995
+                    },
+                    testnet: {
+                        ...daemon,
+                        type: "local",
+                        p2p_bind_port: 29993,
+                        rpc_bind_port: 29994,
+                        zmq_rpc_bind_port: 29995
+                    }
+                }
 
-            appearance: {
-                theme: "dark"
-            },
-            preference: {
+                // Default values
+                this.defaults = {
+                    app: {
+                      data_dir: this.config_dir,
+                      ws_bind_port: 12213,
+                      testnet: false,
+                      wallet_data_dir: this.wallet_dir,
+                      net_type: "mainnet",
+                      wallet_dir: this.wallet_dir
+                    },
+                    appearance: {
+                        theme: "dark"
+                    },
+
+                    preference: {
                 notify_no_payment_id: true,
                 notify_empty_password: true,
                 minimize_to_tray: false,
                 autostart: false,
                 timeout: 600000 // 10 minutes
-            },
-
-            daemon: {
+                },
+                daemon: {
                 type: "local_remote",
                 remote_host: "node.supportarqma.com",
                 remote_port: 19994,
@@ -123,9 +160,21 @@ export class Backend {
                     coin: "arqma",
                     endpoint: "/api/v3/coins/arqma/tickers"
                 }
-            }
-
+            },
+            daemons: objectAssignDeep({}, daemons),
         }
+        this.config_data = {
+                    // Copy all the properties of defaults
+                    ...objectAssignDeep({}, this.defaults),
+
+                }
+
+                this.remotes = [
+                    {
+                        host: "node.supportarqma.com",
+                        port: "19994"
+                    }
+                ]
 
         ipcMain.on("event", (event, data) => {
             this.receive(data)
