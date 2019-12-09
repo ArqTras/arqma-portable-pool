@@ -1,5 +1,6 @@
 import { app, ipcMain, BrowserWindow, Menu, Tray, dialog } from "electron"
 import { Backend } from "./modules/backend"
+import { checkForUpdate } from "./auto-updater"
 import menuTemplate from "./menu"
 import isDev from "electron-is-dev"
 const windowStateKeeper = require("electron-window-state")
@@ -20,6 +21,7 @@ let mainWindow, backend, tray
 let showConfirmClose = true
 let forceQuit = false
 let updateTrayInterval = null
+let installUpdate = false
 
 function createWindow() {
     /**
@@ -42,6 +44,7 @@ function createWindow() {
     })
 
     mainWindow.on("close", (e) => {
+        if (installUpdate) { return }
         if (process.platform === "darwin") {
             if (forceQuit) {
                 forceQuit = false
@@ -130,6 +133,18 @@ function createWindow() {
 }
 
 app.on("ready", () => {
+  checkForUpdate(autoUpdater => {
+      if (mainWindow) {
+          mainWindow.webContents.send("showQuitScreen")
+      }
+
+      const promise = backend ? backend.quit() : Promise.resolve()
+      promise.then(() => {
+          installUpdate = true
+          backend = null
+          autoUpdater.quitAndInstall()
+      })
+  })
     if (process.platform === "darwin") {
         const menu = Menu.buildFromTemplate(menuTemplate)
         Menu.setApplicationMenu(menu)
@@ -193,6 +208,10 @@ app.on("activate", () => {
 })
 
 app.on("before-quit", () => {
+  // Quit instantly if we are installing an update
+    if (installUpdate) {
+        return
+    }
     if (process.platform === "darwin") {
         forceQuit = true
     } else {

@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const objectAssignDeep = require("object-assign-deep");
 
+
 export class Backend {
     constructor(mainWindow) {
         this.mainWindow = mainWindow
