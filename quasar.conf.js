@@ -208,7 +208,7 @@ module.exports = function (ctx) {
 
                 appId: "com.arqma.electron-wallet",
                 productName: "Arqma Electron Wallet",
-                copyright: "Copyright © 2018-2019 Arqma Project, 2018 Ryo/Loki Currency Project",
+                copyright: "Copyright © 2018-2020 Arqma Project, 2018-2020 Ryo/Loki Currency Project",
                 afterSign: "build/notarize.js",
 
                 // directories: {
