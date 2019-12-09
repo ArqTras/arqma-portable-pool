@@ -228,11 +228,11 @@ export class Gateway {
                 break
 
             case "set_prove_transaction_status": {
-                        this.app.store.commit("gateway/set_prove_transaction_status", data)
+                        this.app.store.commit("gateway/set_prove_transaction_status", message.data)
                         break
                         }
             case "set_check_transaction_status": {
-                        this.app.store.commit("gateway/set_check_transaction_status", data)
+                        this.app.store.commit("gateway/set_check_transaction_status", message.data)
                         break
                         }
 
