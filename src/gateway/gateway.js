@@ -9,6 +9,9 @@ export class Gateway {
         this.app = app
         this.router = router
 
+        let language = LocalStorage.has("language") ? LocalStorage.get.item("language") : "en-us"
+        this.setLanguage(language)
+
         let theme = LocalStorage.has("theme") ? LocalStorage.get.item("theme") : "light"
         this.app.store.commit("gateway/set_app_data", {
             config: {
@@ -224,6 +227,14 @@ export class Gateway {
                 Notify.create(Object.assign(notification, message.data))
                 break
 
+            case "set_prove_transaction_status": {
+                        this.app.store.commit("gateway/set_prove_transaction_status", data)
+                        break
+                        }
+            case "set_check_transaction_status": {
+                        this.app.store.commit("gateway/set_check_transaction_status", data)
+                        break
+                        }
 
             case "return_to_wallet_select":
                 this.router.replace({ path: "/wallet-select" })
