@@ -1,6 +1,6 @@
 import { Daemon } from "./daemon";
 import { WalletRPC } from "./wallet-rpc";
-import { Market } from "./market"
+import { Market } from "./market";
 import { Pool } from "./pool";
 import { ipcMain, dialog } from "electron";
 
@@ -608,7 +608,13 @@ export class Backend {
                 });
                 return;
             });
+            this.market.start(this.config_data)
+                            .then(() => {
 
+                            })
+                            .catch(error => {
+
+                            })
         });
     }
 

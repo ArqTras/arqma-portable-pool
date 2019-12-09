@@ -236,10 +236,10 @@ export default {
         },
         showPeerDetails (entry) {
             this.$q.dialog({
-                title: "Peer details",
+                title: this.$t("dialog.banPeer.peerDetailsTitle"),
                 message: JSON.stringify(entry, null, 2),
                 ok: {
-                    label: "Ban peer",
+                    label: this.$t("dialog.banPeer.ok"),
                     color: "negative",
                 },
                 cancel: {
@@ -250,19 +250,19 @@ export default {
             }).then(() => {
 
                 this.$q.dialog({
-                    title: "Ban peer",
-                    message: "Enter length to ban peer in seconds.\nDefault 3600 = 1 hour.",
+                    title: this.$t("dialog.banPeer.title"),
+                    message: this.$t("dialog.banPeer.message"),
                     prompt: {
                         model: "",
                         type: "number"
                     },
                     ok: {
-                        label: "Ban peer",
+                        label: this.$t("dialog.banPeer.ok"),
                         color: "negative"
                     },
                     cancel: {
                         flat: true,
-                        label: "CANCEL",
+                        label: this.$t("dialog.buttons.cancel"),
                         color: this.theme=="dark"?"white":"dark"
                     }
                 }).then(seconds => {
