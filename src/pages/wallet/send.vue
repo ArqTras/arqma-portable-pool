@@ -177,7 +177,18 @@ export default {
                 decimal,
                 greater_than_zero
             },
-            address: { required, address},
+            address: {
+            required,
+            isAddress(value) {
+                    if (value === '') return true
+
+                    return new Promise(resolve => {
+                        address(value, this.$gateway)
+                            .then(() => resolve(true))
+                            .catch(e => resolve(false))
+                    });
+                }
+            },
             payment_id: { payment_id }
         }
     },
@@ -287,21 +298,12 @@ export default {
                 return
             }
 
-            this.$q.dialog({
+            this.showPasswordConfirmation({
                 title: this.$t("dialog.transfer.title"),
-                message: this.$t("dialog.transfer.message"),
-                prompt: {
-                    model: "",
-                    type: "password"
-                },
+                noPasswordMessage: this.$t("dialog.transfer.message"),
                 ok: {
                     label: this.$t("dialog.transfer.ok")
                 },
-                cancel: {
-                    flat: true,
-                    label: this.$t("dialog.buttons.cancel"),
-                    color: this.theme=="dark"?"white":"dark"
-                }
             }).then(password => {
                 this.$store.commit("gateway/set_tx_status", {
                     code: 1,
@@ -311,7 +313,6 @@ export default {
                 const newTx = objectAssignDeep.noMutate(this.newTx, {password})
                 this.$gateway.send("wallet", "transfer", newTx)
             }).catch(() => {
-                console.log('showPasswordConfirmation')
             })
         }
     },

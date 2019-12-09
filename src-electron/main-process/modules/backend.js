@@ -16,6 +16,7 @@ export class Backend {
         this.market = null
         this.pool = null
         this.config_dir = null
+        this.wallet_dir = null
         this.config_file = null
         this.config_data = {}
     }
@@ -24,9 +25,10 @@ export class Backend {
 
         if(os.platform() == "win32") {
 	    this.config_dir = "C:\\ProgramData\\arqma";
-	    //this.config_dir = path.join(os.homedir(), "ryo");
+	    this.wallet_dir = `${os.homedir()}\\Documents\\Arqma`
         } else {
             this.config_dir = path.join(os.homedir(), ".arqma");
+            this.wallet_dir = path.join(os.homedir(), "Arqma")
         }
 
         if (!fs.existsSync(this.config_dir)) {
@@ -44,11 +46,14 @@ export class Backend {
             app: {
                 data_dir: this.config_dir,
                 ws_bind_port: 12213,
-                testnet: false
+                testnet: false,
+                wallet_data_dir: this.wallet_dir,
+                net_type: "mainnet",
+                wallet_dir: this.wallet_dir
             },
 
             appearance: {
-                theme: "light"
+                theme: "dark"
             },
             preference: {
                 notify_no_payment_id: true,
@@ -227,17 +232,22 @@ export class Backend {
                 })
                 break
 
-            case "open_explorer":
-                let explorer_url = "https://explorer.arqma.com"
-                if(this.config_data.app.testnet) {
-                    explorer_url = "https://stageblocks.arqma.com"
-                }
-                if(params.type == "tx") {
-                    require("electron").shell.openExternal(`${explorer_url}/tx/${params.id}`)
-                } else if(params.type == "block") {
-                    require("electron").shell.openExternal(`${explorer_url}/block/${params.id}`)
-                }
-                break;
+                case "open_explorer":
+                  const { net_type } = this.config_data.app
+
+                  let path = null
+                  if (params.type === "tx") {
+                      path = "tx"
+                  } else if (params.type === "service_node") {
+                      path = "service_node"
+                  }
+
+                  if (path) {
+                      const baseUrl = net_type === "testnet" ? "https://stageblocks.arqma.com/" : "https://explorer.arqma.com/"
+                      const url = `${baseUrl}/${path}/`
+                      require("electron").shell.openExternal(url + params.id)
+                  }
+                  break
 
             case "open_url":
                 require("electron").shell.openExternal(params.url)
@@ -405,6 +415,7 @@ export class Backend {
                 });
                 return;
             }
+            const { net_type } = this.config_data.app
 
             this.daemon = new Daemon(this);
             this.walletd = new WalletRPC(this);
