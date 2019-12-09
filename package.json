@@ -46,7 +46,7 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "rotating-file-stream": "^1.4.1",
-    "ryo-core-js": "git://github.com/mosu-forge/ryo-core-js.git",
+    "ryo-core-js": "git://github.com/arqtras/ryo-core-js.git",
     "vue-chartjs": "^3.4.2",
     "utf-8-validate": "^5.0.2",
     "validation": "0.0.1",
