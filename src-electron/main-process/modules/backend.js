@@ -208,8 +208,6 @@ export class Backend {
                 if (this.walletd) {
                     this.walletd.handle(data);
                 }
-                break;
-            case "market":
                 if (this.market) {
                     this.market.handle(data)
                 }
@@ -610,10 +608,8 @@ export class Backend {
             });
             this.market.start(this.config_data)
                             .then(() => {
-
                             })
                             .catch(error => {
-
                             })
         });
     }
